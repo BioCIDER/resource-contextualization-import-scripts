@@ -1,5 +1,5 @@
 
-Control Layer
+Control module
 
 synchronizer.py
 
@@ -11,10 +11,10 @@ Install the APScheduler module:
 
 [APScheduler downloads](https://pypi.python.org/pypi/APScheduler/#downloads)
 
-Download the source code page, extract it and execute: 
+Download the source code package, extract it and execute: 
 
 `sudo python setup.py install`
 
 
-You also will need other specific importing scripts to execute this.
+You will need to register into 'PROCESSES' var all scripts you want to execute.
 

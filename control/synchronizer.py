@@ -9,46 +9,66 @@
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
+
+import multiprocessing as mp
 import time
-
+import logging
 import sys
-# TO IMPORT SCRIPTS: 
-# from file import xfunction
-# sys.path.insert(0, '../python-vis-iann-events-list')
-# from iannData.py default
-#ckanData.py
+
+MAX_THREADS = min(2, mp.cpu_count()) 
+
+
+# Importing specific scripts
+sys.path.insert(0, '../specific')
+
  
-"""
-    Function that executes all synchronisation scripts of the system.
+# EXAMPLE:
+# import test
+# PROCESSES = [test.testFunction2, test.testFunction3]
+
+PROCESSES = []
+ 
 
 """
-def execute_scripts():
-    print "exec!"       # WE NEED ASYNCHRONOUS CALLS FOR EACH SERVICE
-  
+    Function that executes all specific synchronisation scripts registered in PROCESSES.
+
+"""
+def execute_specific_scripts():
+    global MAX_THREADS
+    global PROCESSES
+    print MAX_THREADS
+    pool = mp.Pool(MAX_THREADS)
+    
+    for process_number in range(0, len(PROCESSES)):
+        # full call example : pool.apply_async(foo_pool, args = (i, ), callback = log_result)
+        pool.apply_async(PROCESSES[process_number]) 
+    pool.close()
+    pool.join()
  
 """
     Function that is to be executed in a thread by the scheduler
-
-    :rtype: 
 """
 def synchronize_job():
-    execute_scripts()
+    execute_specific_scripts()
+ 
  
 """
-    Console normal entry point
-    
+    Executes 'synchronize_job' as a synchronous job every hour.
+    Console normal entry point   
 """
 def start_blocking_scheduler():
     sched = BlockingScheduler()
     job = sched.add_job(synchronize_job,'cron' , id='synchronize_job', minute=0)
 
     try:
+        logging.basicConfig()
         sched.start()
     except (KeyboardInterrupt, SystemExit):
         pass
     
 
 """
+    Executes 'synchronize_job' as an asynchronous job every hour.
     Alternative non-blocking entry point
     
 """
@@ -56,6 +76,7 @@ def start_background_scheduler():
     sched = BackgroundScheduler()
     job = sched.add_job(synchronize_job,'cron' , id='synchronize_job', minute=0)
 
+    logging.basicConfig()
     sched.start()
     
     try:
@@ -68,4 +89,4 @@ def start_background_scheduler():
  
  
 if __name__ == "__main__":
-    start_background_scheduler()
+    start_blocking_scheduler()
