@@ -26,7 +26,7 @@ sys.path.insert(0, '../specific')
 # import test
 # PROCESSES = [test.testFunction2, test.testFunction3]
 
-PROCESSES = []
+PROCESSES = [ckanData.main, iannData.main]
  
 
 """
