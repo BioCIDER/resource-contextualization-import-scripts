@@ -15,6 +15,7 @@ def get_materials_names():
             None if there is any error.
     """
     
+    
     try:
         tessData = requests.get('http://tess.elixir-uk.org/api/3/action/package_list')
         names_list = json.loads(tessData.text).get('result')
@@ -51,7 +52,7 @@ def get_json_from_material_name(material_name):
 def get_one_field_from_tm_data(data, field_name):
     """
         Get one field value from the data of one training material.
-        * data {list} material names.
+        * data {list} data of one training material.
         * field_name {string} name of the field to be obtained.
         * {string} Return the field value requested. None if there is any error.
     """
@@ -66,7 +67,7 @@ def get_one_field_from_tm_data(data, field_name):
 def get_title(data):
     """
         Get 'title' field from the data of one training material.
-        * data {list} material names.
+        * data {list} data of one training material.
         * {string} Return 'title' value from the list. None if there is any error.
     """
     
@@ -76,8 +77,8 @@ def get_title(data):
 
 def get_notes(data):
     """
-        Get 'notes' field from the data of one training material.
-        * data {list} material names.
+        Get 'notes' (description) field from the data of one training material.
+        * data {list} data of one training material.
         * {string} Return 'notes' value from the list. None if there is any error.
     """
     
@@ -89,7 +90,7 @@ def get_notes(data):
 def get_field(data):
     """
         Get 'field' field from the data of one training material.
-        * data {list} material names.
+        * data {list} data of one training material.
         * {string} Return 'field' value from the list. None if there is any error.
     """
 
@@ -101,13 +102,12 @@ def get_field(data):
 # Makes a Request to the Solr Server from "localhost"
    * solrLocal {class} url - Uniform Resource Locator
 """
-
 solrLocal = pysolr.Solr('http://localhost:8983/solr/eventsData', timeout=10)
 
-# solrLocal.add - Adds the database localhost all variables collected in "tess.elixir-uk.org"
-
 def insert_result(title, notes, field):
-    
+    """
+        Adds to our database all variables collected in "tess.elixir-uk.org"
+    """
 
     solrLocal.add([
         {
