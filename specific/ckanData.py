@@ -1,6 +1,11 @@
 import json
 import requests
 import pysolr
+import sys
+
+# Importing db manager
+sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
+from DB_Factory import DBFactory
 
 
 def get_materials_names():
@@ -10,8 +15,7 @@ def get_materials_names():
         * {list} training material names:          
             None if there is any error.
     """
-    
-    
+        
     try:
         tessData = requests.get('http://tess.elixir-uk.org/api/3/action/package_list')
         names_list = json.loads(tessData.text).get('result')
@@ -21,8 +25,7 @@ def get_materials_names():
         return None
 
 
-
-  
+ 
 def get_json_from_material_name(material_name):
     """
         Makes a Request to the CKAN Server from "tess.elixir-uk.org" to obtain data of one training material.
@@ -98,26 +101,6 @@ def get_field(data):
     return 'Training Materials'
 
 
-# TO MOVE TO DB ABSTRACT LAYER
-"""
-# Makes a Request to the Solr Server from "localhost"
-   * solrLocal {class} url - Uniform Resource Locator
-"""
-solrLocal = pysolr.Solr('http://localhost:8983/solr/eventsData', timeout=10)
-
-def insert_result(title, notes, field):
-    """
-        Adds to our database all variables collected in "tess.elixir-uk.org"
-    """
-
-    solrLocal.add([
-        {
-            "title": title,
-            "notes": notes,
-            "field": field
-        }
-    ])
-
 
 def main():
     """
@@ -126,14 +109,19 @@ def main():
     """
 
     print ('>> Starting ckanData importing process...')
-
+    
     materials_names = get_materials_names()
     if materials_names is not None:
+        dbFactory = DBFactory()
+        # print (dbFactory)
+        dbManager = dbFactory.get_my_db_manager()
+        # print (dbManager)
+        
         for material_name in materials_names:
             json_data = get_json_from_material_name(material_name)
             if (json_data is not None):
-                insert_result(get_title(json_data), get_notes(json_data), get_field(json_data))
-        
+                dbManager.insert_data({"title":get_title(json_data), "notes":get_notes(json_data), "field":get_field(json_data)})
+                
     print ('< Finished ckanData importing process...')   
 
 
