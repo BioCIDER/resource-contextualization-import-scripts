@@ -1,6 +1,11 @@
 from __future__ import print_function
 import pysolr
 import re
+import sys
+
+# Importing db manager
+sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
+from DB_Factory import DBFactory
 
 
 def get_iann_data():
@@ -149,42 +154,6 @@ def remove_unicode_chars(variable):
 
 
 
-
-# MOVE TO DB ABSTRACTION LAYER
-'''
- # Makes a Request to the Solr Server from "localhost"
-    * solrLocal {class} url - Uniform Resource Locator
-    * resultsLocal {class} Query operator:
-        "q='*:*'" - Query all the data;
-        "rows='5000'" - Indicates the maximum number of events that will be returned;
-'''
-
-solrLocal = pysolr.Solr('http://localhost:8983/solr/eventsData', timeout=10)
-# resultsLocal = solrLocal.search(q='*:*', rows='5000')
-
-
-def insert_result(title, start, end, city, country, field, provider, link):
-    """
-        Adds to our database all variables collected in "iann.pro"
-    """
-    solrLocal.add([
-        {
-            "title": title,
-            "start": start,
-            "end": end,
-            "city": city,
-            "country": country,
-            "field": field,
-            "provider": provider,
-            "link": link
-        }
-    ])
-
-
-'''!!! Delete all the data from localHost !!!'''
-#solrLocal.delete(q='*:*')
-
-
 def main():
     """
         Executes the main functionality of this script: it extracts information from iAnn events data and insert some of them
@@ -206,11 +175,15 @@ def main():
     iann_data = get_iann_data()
     
     if iann_data is not None:
+        dbFactory = DBFactory()
+        # print (dbFactory)
+        dbManager = dbFactory.get_my_db_manager()
+        # print (dbManager)
         for result in iann_data:
-            if (result is not None):
-                insert_result(get_title(result), get_start(result), get_end(result),
-                              get_city(result), get_country(result), get_field(result),
-                              get_provider(result), get_link(result))
+            if (result is not None):               
+                dbManager.insert_data({"title":get_title(result), "start":get_start(result), "end":get_end(result),
+                              "city":get_city(result), "country":get_country(result), "field":get_field(result),
+                              "provider":get_provider(result), "link":get_link(result)})
      
     print ('< Finished iann importing process...')   
 

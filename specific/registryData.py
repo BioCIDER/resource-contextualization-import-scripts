@@ -2,6 +2,12 @@ import requests
 import json
 import pysolr
 
+import sys
+
+# Importing db manager
+sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
+from DB_Factory import DBFactory
+
 
 
 def get_records():
@@ -85,34 +91,6 @@ def get_field(data):
 
 
 
-# MOVE TO DB ABSTRACTION LAYER
-'''
- # Makes a Request to the Solr Server from "localhost"
-    * solrLocal {class} url - Uniform Resource Locator
-'''
-solrLocal = pysolr.Solr('http://localhost:8983/solr/eventsData', timeout=10)
-
-# solrLocal.add - Adds the database localhost all variables collected in "tess.elixir-uk.org"
-def insert_result(title, description,link, field):
-    """
-        Adds to our database all variables collected in "tess.elixir-uk.org"
-    """
-
-    solrLocal.add([
-        {
-            "title": title,
-            "notes": description,
-            "link": link,
-            "field": field
-        }
-    ])
-
-    #print("Title: " + title)
-    #print("Description: " + description)
-    #print("URL: " + link)
-    
-      
-
 def main():
     """
         Executes the main functionality of this script: it extracts JSON data from each record found on Elixir's registry
@@ -123,8 +101,15 @@ def main():
 
     records = get_records()
     if records is not None:
+        dbFactory = DBFactory()
+        # print (dbFactory)
+        dbManager = dbFactory.get_my_db_manager()
+        # print (dbManager)
+        
         for record in records:
-            insert_result(get_title(record), get_description(record), get_link(record),get_field(record))
+            dbManager.insert_data({"title":get_title(record), "notes":get_description(record),
+                                   "link":get_link(record), "field":get_field(record)})
+
      
     print ('< Finished Elixir registry importing process...')
    
