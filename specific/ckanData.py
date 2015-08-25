@@ -124,8 +124,8 @@ def main():
         and inserts its main data into the DB.
     """
 
-    materials_titles = get_materials_names()
-    if materials_titles is not None:
+    materials_names = get_materials_names()
+    if materials_names is not None:
         for material_name in materials_names:
             json_data = get_json_from_material_name(material_name)
             if (json_data is not None):
