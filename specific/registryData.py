@@ -118,13 +118,16 @@ def main():
         Executes the main functionality of this script: it extracts JSON data from each record found on Elixir's registry
         and inserts its main data into the DB.
     """
+    
+    print ('>> Starting Elixir registry importing process...')
 
     records = get_records()
-    print (records)
     if records is not None:
         for record in records:
             insert_result(get_title(record), get_description(record), get_link(record),get_field(record))
-        
+     
+    print ('< Finished Elixir registry importing process...')
+   
 
 
 if __name__ == "__main__":

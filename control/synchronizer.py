@@ -21,12 +21,11 @@ MAX_THREADS = min(2, mp.cpu_count())
 # Importing specific scripts
 sys.path.insert(0, '../specific')
 
- 
-# EXAMPLE:
-# import test
-# PROCESSES = [test.testFunction2, test.testFunction3]
+import ckanData
+import iannData
+import registryData
 
-PROCESSES = [ckanData.main, iannData.main]
+PROCESSES = [ckanData.main, iannData.main, registryData.main]
  
 
 """

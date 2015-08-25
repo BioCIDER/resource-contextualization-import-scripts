@@ -201,6 +201,8 @@ def main():
         See more eg: http://iann.pro/iann-web-services
     """
 
+    print ('>> Starting iann importing process...')
+    
     iann_data = get_iann_data()
     
     if iann_data is not None:
@@ -209,7 +211,8 @@ def main():
                 insert_result(get_title(result), get_start(result), get_end(result),
                               get_city(result), get_country(result), get_field(result),
                               get_provider(result), get_link(result))
-        
+     
+    print ('< Finished iann importing process...')   
 
 
 if __name__ == "__main__":

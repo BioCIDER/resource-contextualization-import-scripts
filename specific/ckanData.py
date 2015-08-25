@@ -125,6 +125,8 @@ def main():
         and inserts its main data into the DB.
     """
 
+    print ('>> Starting ckanData importing process...')
+
     materials_names = get_materials_names()
     if materials_names is not None:
         for material_name in materials_names:
@@ -132,6 +134,7 @@ def main():
             if (json_data is not None):
                 insert_result(get_title(json_data), get_notes(json_data), get_field(json_data))
         
+    print ('< Finished ckanData importing process...')   
 
 
 if __name__ == "__main__":
