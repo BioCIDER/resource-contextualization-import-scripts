@@ -6,12 +6,8 @@ import pysolr
 def get_materials_names():
         
     """
-        Get all training material data from "tess.elixir-uk.org"
-        * {list} training material data:
-            variables {string}:
-            "title" - Title for the training material.
-            "notes" - Description for the training material.
-            "field" - Default ('Training Materials').
+        Get all training material names from "tess.elixir-uk.org"
+        * {list} training material names:          
             None if there is any error.
     """
     
@@ -31,7 +27,12 @@ def get_json_from_material_name(material_name):
     """
         Makes a Request to the CKAN Server from "tess.elixir-uk.org" to obtain data of one training material.
         * naterial_name {string} name of the field to be obtained.
-        * {list} training material data. None if there is any error.
+        * {list} training material data. In this script we will need:
+            variables {string}:
+                "title" - Title for the training material.
+                "notes" - Description for the training material.
+                "field" - Default ('Training Materials').
+            None if there is any error.
     """
     
     try:
