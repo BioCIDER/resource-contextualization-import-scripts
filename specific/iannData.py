@@ -23,18 +23,19 @@ def get_iann_data():
 
 
 
-def get_one_field_from_iann_result(result, field_name):
+def get_one_field_from_iann_data(result, field_name):
     """
         Generic function to get one field value from the data of one iAnn result.
         * result {list} one event's iAnn data.
         * field_name {string} name of the field to be obtained.
         * {string} Return the field value requested. None if there is any error.
     """
-    
     try:
-        return format(result['result'])
-    except Exception:
-        print ("Error getting "+field_name+" from one iAnn result")
+       return format(result[field_name])
+    except Exception as e:
+        print ("Error getting "+field_name+" from iAnn result:")
+        print (result)
+        print (e)
         return None
 
 
@@ -45,7 +46,7 @@ def get_title(data):
         * {string} Return 'title' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'title')
+    get_one_field_from_iann_data(data, 'title')
     
     
 def get_start(data):
@@ -55,7 +56,7 @@ def get_start(data):
         * {string} Return 'start' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'start')
+    get_one_field_from_iann_data(data, 'start')
     
     
 def get_end(data):
@@ -65,7 +66,7 @@ def get_end(data):
         * {string} Return 'end' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'end')
+    get_one_field_from_iann_data(data, 'end')
     
     
 def get_city(data):
@@ -75,7 +76,7 @@ def get_city(data):
         * {string} Return 'city' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'city')
+    get_one_field_from_iann_data(data, 'city')
     
     
 def get_country(data):
@@ -85,7 +86,7 @@ def get_country(data):
         * {string} Return 'country' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'country')
+    get_one_field_from_iann_data(data, 'country')
     
     
 def get_provider(data):
@@ -95,7 +96,7 @@ def get_provider(data):
         * {string} Return 'provider' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'provider')
+    get_one_field_from_iann_data(data, 'provider')
     
     
 def get_link(data):
@@ -105,7 +106,7 @@ def get_link(data):
         * {string} Return 'link' value from the list. None if there is any error.
     """
     
-    get_one_field_from_tm_data(data, 'link')
+    get_one_field_from_iann_data(data, 'link')
     
     
 def get_field(data):
@@ -115,7 +116,7 @@ def get_field(data):
         * {string} Return 'link' value from the list. None if there is any error.
     """
     
-    my_field = get_one_field_from_tm_data(data, 'field')
+    my_field = get_one_field_from_iann_data(data, 'field')
     if my_field is not None:
         return remove_unicode_chars(my_field)
     else:
@@ -139,8 +140,10 @@ def remove_unicode_chars(variable):
             for index in array:
                 strEach = index
                 listFull.append(strEach)
+            return listFull
         else:
             listFull.append(strClear)
+            return listFull
     else:
         return None
 
@@ -164,7 +167,6 @@ def insert_result(title, start, end, city, country, field, provider, link):
     """
         Adds to our database all variables collected in "iann.pro"
     """
-    
     solrLocal.add([
         {
             "title": title,
@@ -200,6 +202,7 @@ def main():
     """
 
     iann_data = get_iann_data()
+    
     if iann_data is not None:
         for result in iann_data:
             if (result is not None):
