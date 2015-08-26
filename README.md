@@ -1,12 +1,37 @@
 # resource-contextualization—import-scripts
 
-Data import Layer
+Data import and control Layer
 
 > Python scripts to import data from different sources. 
 
 ## Getting Started
 
-You need a proper python interpreter for your system. Download it from [Python downloads](https://www.python.org/downloads/)
+You need a proper **python** interpreter for your system. Download it from [Python downloads](https://www.python.org/downloads/)
+
+Version tested with this application is 2.7.
+
+Also, you need to install **APScheduler** to be able to run the importing synchronization script. Download it from  [APScheduler downloads](https://pypi.python.org/pypi/APScheduler/) 
+
+After downloading it, you only need to execute
+
+sudo python setup.py install
+
+Last version tested is 3.0.3
+
+
+### synchronizer.py
+
+This script manages which specific scripts are executed, and when they are. To add a new one, you need to upload it to /specific folder and add it its main() function to PROCESSES list.
+
+Currently, all processes are executed asynchronously every hour.
+
+See CRON documentation at : [APScheduler docs](http://apscheduler.readthedocs.org/en/latest/modules/triggers/cron.html) 
+
+### Specific importing scripts
+
+Currently we have 3 different specific scripts into /specific folder: **ckanData.py** (to import ELIXIR training materials), **iannData.py** (events data) and **registryData.py** (ELIXIR records).
+
+You can execute them independently or through synchronizer.py.
 
 
 ## Contributing
