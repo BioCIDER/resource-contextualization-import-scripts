@@ -90,20 +90,28 @@ def get_field(data):
     return 'Services Registry'
 
 
-
 def main():
+    main_options(None)
+    
+def main_options(options):
     """
         Executes the main functionality of this script: it extracts JSON data from each record found on Elixir's registry
         and inserts its main data into the DB.
+        * options {list} specific configurations for initialization.
+            ds_name: specific dataset/database to use with the DB manager
     """
     
     print ('>> Starting Elixir registry importing process...')
+
+    ds_name = None
+    if options is not None:
+        ds_name = options['ds_name']
 
     records = get_records()
     if records is not None:
         dbFactory = DBFactory()
         # print (dbFactory)
-        dbManager = dbFactory.get_my_db_manager()
+        dbManager = dbFactory.get_default_db_manager(ds_name)
         # print (dbManager)
         
         for record in records:
@@ -116,4 +124,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_options({"ds_name":'test_core'})
+    # main()

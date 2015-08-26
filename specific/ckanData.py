@@ -103,18 +103,29 @@ def get_field(data):
 
 
 def main():
+    main_options(None)
+    
+def main_options(options):
     """
         Executes the main functionality of this script: it extracts JSON data from each Training Material found
         and inserts its main data into the DB.
+        * options {list} specific configurations for initialization.
+            ds_name: specific dataset/database to use with the DB manager
+        
     """
 
     print ('>> Starting ckanData importing process...')
+    
+    ds_name = None
+    if options is not None:
+        ds_name = options['ds_name']
+    
     
     materials_names = get_materials_names()
     if materials_names is not None:
         dbFactory = DBFactory()
         # print (dbFactory)
-        dbManager = dbFactory.get_my_db_manager()
+        dbManager = dbFactory.get_default_db_manager(ds_name)
         # print (dbManager)
         
         for material_name in materials_names:
@@ -126,4 +137,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # main_options({"ds_name":'test_core'})
     main()

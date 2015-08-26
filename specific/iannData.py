@@ -153,12 +153,17 @@ def remove_unicode_chars(variable):
         return None
 
 
-
 def main():
+    main_options(None)
+    
+def main_options(options):
     """
         Executes the main functionality of this script: it extracts information from iAnn events data and insert some of them
-        into the DB:
-        * variables {string}:
+        into the DB
+        * options {list} specific configurations for initialization.
+            ds_name: specific dataset/database to use with the DB manager
+               
+        variables {string}:
         "title" - Title for the event;
         "start" - Date the event starts;
         "end" - Date the event ends;
@@ -172,12 +177,17 @@ def main():
 
     print ('>> Starting iann importing process...')
     
+    ds_name = None
+    if options is not None:
+        ds_name = options['ds_name']
+    
+
     iann_data = get_iann_data()
     
     if iann_data is not None:
         dbFactory = DBFactory()
         # print (dbFactory)
-        dbManager = dbFactory.get_my_db_manager()
+        dbManager = dbFactory.get_default_db_manager(ds_name)
         # print (dbManager)
         for result in iann_data:
             if (result is not None):               
@@ -189,4 +199,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # main_options({"ds_name":'test_core'})
     main()
