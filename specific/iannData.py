@@ -1,7 +1,7 @@
 from __future__ import print_function
 import re
 import sys
-import datetime
+from datetime import datetime, timedelta, date, time
 import pysolr
 
 # Importing db manager
@@ -160,17 +160,39 @@ def get_insertion_date_field():
         Get insertion date of any registry obtained with this script.
         * {date} Return source type value.
     """
-    return datetime.datetime.now()
+    return datetime.now()
+
+
+def get_creation_date_field(data):
+    """
+        Get original creation date of any registry obtained with this script.
+        Note: Source registries can have more than one submission date. We get only the first, in order to
+        obtain the whole first creation date.
+        * data {list} one event's iAnn data.
+        * {date} Return creation date value.
+    """
+    my_field = get_one_field_from_iann_data(data, 'submission_date')
+    if my_field is not None:
+        try:
+            date_string_list = remove_unicode_chars(my_field)      
+            datetime_object = datetime.strptime(date_string_list[0], '%Y-%m-%dT%H:%M:%SZ' )
+            return datetime_object
+        except Exception as e:
+            print ('Exception getting creation date field')
+            print(e)
+            return None
+    else:
+        return None
+
 
     
 
 def remove_unicode_chars(variable):
     """
         Utility function to remove special Unicode chars.
-        * variable {string} one string variable with Unicode chars
-        * {string} Return the variable without Unicode chars. None if there is any error.
+        * variable {string} string variable with Unicode chars. It can contains more than only one different strings. 
+        * {list} Return the variables without Unicode chars. None if there is any error.
     """
-    
     if variable is not None and isinstance(variable, basestring) : 
         listFull = []
         strText = variable.replace("[u'", "")
@@ -240,6 +262,7 @@ def main_options(options):
             "link" {string} Link to the data registry.
             "source" {string} Default ('ckan');
             "insertion date" {date} Current date and time.
+            "created" {date} Date and time of creation of the original registry.
 
         See more eg: http://iann.pro/iann-web-services
     """
@@ -279,7 +302,8 @@ def main_options(options):
                     "provider":get_provider(result),
                     "link":get_link(result),
                     "source":get_source_type_field(),
-                    "insertion_date":get_insertion_date_field()
+                    "insertion_date":get_insertion_date_field(),
+                    "created":get_creation_date_field(result)                    
                     })
                 
     print ('< Finished iann importing process...')   
@@ -287,7 +311,7 @@ def main_options(options):
 
 if __name__ == "__main__":
     # main_options({"ds_name":'test_core'})
-    # mainFullUpdating()
-    now = datetime.datetime.now()
-    oneweekbefore = now-datetime.timedelta(days=7)
-    mainUpdating(oneweekbefore)
+    mainFullUpdating()
+    #now = datetime.now()
+    #oneweekbefore = now-timedelta(days=7)
+    #mainUpdating(oneweekbefore)

@@ -133,9 +133,19 @@ def get_created(data):
     """
         Get 'created' field from the data of one training material.
         * data {list} data of one training material.
-        * {string} Return 'created' value from the list. None if there is any error.
-    """   
-    return get_one_field_from_tm_data(data, 'metadata_created')
+        * {datetime} Return 'created' value from the list. None if there is any error.
+    """    
+    my_field = get_one_field_from_tm_data(data, 'metadata_created')
+    if my_field is not None:
+        try:
+            datetime_object = datetime.strptime(my_field, '%Y-%m-%dT%H:%M:%S.%f' )
+            return datetime_object
+        except Exception as e:
+            print ('Exception getting creation date field')
+            print(e)
+            return None
+    else:
+        return None
 
 
 def isDataMoreRecentThan(data, minimumDate):
@@ -146,10 +156,14 @@ def isDataMoreRecentThan(data, minimumDate):
         * {string} Return 'created' value from the list. None if there is any error.
     """  
     if minimumDate is not None:
-        createdDateString = get_created(data)
+        createdDate = get_created(data)
         if createdDateString is not None:
-            datetime_object = datetime.strptime(createdDateString, '%Y-%m-%dT%H:%M:%S.%f' )
-            return (minimumDate < datetime_object)
+            try:
+                return (minimumDate < createdDate)
+            except Exception as e:
+                print ('Error operating with createdData')
+                print(e)
+                return False
         else:
             return False
     else:
@@ -205,6 +219,7 @@ def main_options(options):
     
     ds_name = None
     delete_all_old_data = False
+    registriesFromTime = None
     if options is not None:
         if ('ds_name' in options.keys()):
             ds_name = options['ds_name']
@@ -228,13 +243,13 @@ def main_options(options):
             if (json_data is not None):
                 # If we have registriesFromTime, we have to check that each one's creation date if more recent than registriesFromTime
                 if registriesFromTime is None or isDataMoreRecentThan(json_data,registriesFromTime):
-                    print(json_data)
                     dbManager.insert_data({
                         "title":get_title(json_data),
                         "notes":get_notes(json_data),
                         "field":get_field(json_data),
                         "source":get_source_type_field(),
-                        "insertion_date":get_insertion_date_field()
+                        "insertion_date":get_insertion_date_field(),
+                        "created":get_created(json_data)
                         })
     print ('< Finished ckanData importing process...')   
 
