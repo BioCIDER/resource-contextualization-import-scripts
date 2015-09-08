@@ -153,7 +153,7 @@ def isDataMoreRecentThan(data, minimumDate):
         Returns if data passed as argument is more recient than the minimumDate argument.
         * data {list} data of one training material.
         * minimumDate {datetime} minimum date and time that registry should be. 
-        * {string} Return 'created' value from the list. None if there is any error.
+        * {boolean} Return True if our data is more recent than minimumDate, False if data is older or equally old than minimumDate.
     """  
     if minimumDate is not None:
         createdDate = get_created(data)
