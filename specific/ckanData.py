@@ -2,10 +2,34 @@ import json
 import requests
 import sys
 from datetime import datetime, timedelta, date, time
+import logging
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
+
+
+
+
+
+logger = None
+
+def init_logger():
+    """
+        Function that initialises logging system
+    """
+    global logger
+    logger = logging.getLogger('ckan_logs')
+    if (len(logger.handlers) == 0):           # We only create a StreamHandler if there aren't another one
+        streamhandler = logging.StreamHandler()
+        streamhandler.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
+        # create formatter
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        streamhandler.setFormatter(formatter)
+        # add formatter to ch
+        logger.addHandler(streamhandler)
+    
 
 
 def get_materials_names():
@@ -20,8 +44,9 @@ def get_materials_names():
         tessData = requests.get('http://tess.elixir-uk.org/api/3/action/package_list')
         names_list = json.loads(tessData.text).get('result')
         return names_list
-    except RequestException:
-        print "RequestException asking for Tess data"
+    except RequestException as e:
+        logger.error ("RequestException asking for Tess data")
+        logger.error (e)
         return None
 
 
@@ -44,7 +69,8 @@ def get_json_from_material_name(material_name):
             json_data = json.loads(results.text)
             return json_data
         except ValueError as e:
-            print("error at", json.last_error_position)
+            logger.error ("error at", json.last_error_position)
+            logger.error(e)
             return None
         
     except RequestException:
@@ -64,7 +90,7 @@ def get_one_field_from_tm_data(data, field_name):
     try:
         return format(data['result'].get(field_name))
     except Exception:
-        print "Error getting "+field_name+" from training materials JSON"
+        logger.error ("Error getting "+field_name+" from training materials JSON")
         return None
 
 
@@ -141,8 +167,8 @@ def get_created(data):
             datetime_object = datetime.strptime(my_field, '%Y-%m-%dT%H:%M:%S.%f' )
             return datetime_object
         except Exception as e:
-            print ('Exception getting creation date field')
-            print(e)
+            logger.error('Exception getting creation date field')
+            logger.error(e)
             return None
     else:
         return None
@@ -161,8 +187,8 @@ def isDataMoreRecentThan(data, minimumDate):
             try:
                 return (minimumDate < createdDate)
             except Exception as e:
-                print ('Error operating with createdData')
-                print(e)
+                logger.error('Error operating with createdData')
+                logger.error(e)
                 return False
         else:
             return False
@@ -215,18 +241,28 @@ def main_options(options):
         
     """
 
-    print ('>> Starting ckanData importing process...')
+    init_logger()
     
     ds_name = None
     delete_all_old_data = False
     registriesFromTime = None
+    paramsToLog = ''
+
     if options is not None:
         if ('ds_name' in options.keys()):
             ds_name = options['ds_name']
+            paramsToLog = paramsToLog + ' ds_name="'+ds_name+'"   '
         if ('delete_all_old_data' in options.keys()):
             delete_all_old_data = options['delete_all_old_data']
+            paramsToLog = paramsToLog + ' delete_all_old_data='+str(delete_all_old_data)+'   '
         if ('registriesFromTime' in options.keys()):
             registriesFromTime = options['registriesFromTime']
+            paramsToLog = paramsToLog + ' registriesFromTime="'+str(registriesFromTime)+'"'
+        logger.info ('>> Starting ckanData importing process... params: '+paramsToLog)
+
+    else:
+        logger.info ('>> Starting ckanData importing process...')
+
     
     
     materials_names = get_materials_names()
@@ -236,14 +272,20 @@ def main_options(options):
         dbManager = dbFactory.get_default_db_manager(ds_name)
         # print (dbManager)
         if (delete_all_old_data is not None and delete_all_old_data):
-            dbManager.delete_data_by_conditions([['EQ','source',get_source_type_field()]])
+            ckan_conditions = [['EQ','source',get_source_type_field()]]
+            previous_count = dbManager.count_data_by_conditions(ckan_conditions)
+            dbManager.delete_data_by_conditions(ckan_conditions)
+            new_count = dbManager.count_data_by_conditions(ckan_conditions)
+            if (previous_count is not None and new_count is not None):
+                logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
         
+        numSuccess = 0
         for material_name in materials_names:
             json_data = get_json_from_material_name(material_name)
             if (json_data is not None):
                 # If we have registriesFromTime, we have to check that each one's creation date if more recent than registriesFromTime
                 if registriesFromTime is None or isDataMoreRecentThan(json_data,registriesFromTime):
-                    dbManager.insert_data({
+                    success = dbManager.insert_data({
                         "title":get_title(json_data),
                         "notes":get_notes(json_data),
                         "field":get_field(json_data),
@@ -251,7 +293,12 @@ def main_options(options):
                         "insertion_date":get_insertion_date_field(),
                         "created":get_created(json_data)
                         })
-    print ('< Finished ckanData importing process...')   
+                    if success:
+                        numSuccess=numSuccess+1
+                        
+        logger.info ('Inserted '+str(numSuccess)+' new registries')   
+                    
+    logger.info('<< Finished ckanData importing process.')   
 
 
 if __name__ == "__main__":

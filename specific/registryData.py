@@ -2,12 +2,34 @@ import requests
 import json
 import sys
 import datetime
+import logging
 
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
 
+
+
+
+logger = None
+
+def init_logger():
+    """
+        Function that initialises logging system
+    """
+    global logger
+    logger = logging.getLogger('elixir_registry_logs')
+    if (len(logger.handlers) == 0):           # We only create a StreamHandler if there aren't another one
+        streamhandler = logging.StreamHandler()
+        streamhandler.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
+        # create formatter
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        streamhandler.setFormatter(formatter)
+        # add formatter to ch
+        logger.addHandler(streamhandler)
+    
 
 
 def get_records():
@@ -27,8 +49,9 @@ def get_records():
         elixirData = requests.get('https://elixir-registry.cbs.dtu.dk/api/tool')
         records_list = json.loads(elixirData.text)
         return records_list
-    except RequestException:
-        print "RequestException asking for Elixir data"
+    except RequestException as e:
+        logger.error ("RequestException asking for Elixir data")
+        logger.error (e)
         return None
 
 
@@ -42,11 +65,11 @@ def get_one_field_from_registry_data(record, field_name):
         * {string} Return the field value requested. None if there is any error.
     """
     try:
-       return format(record[field_name])
+        return format(record[field_name])
     except Exception as e:
-        print ("Error getting "+field_name+" from Elixir record:")
-        print (record)
-        print (e)
+        logger.error("Error getting "+field_name+" from Elixir record:")
+        logger.error(record)
+        logger.error(e)
         return None
 
 
@@ -57,7 +80,7 @@ def get_title(data):
         * {string} Return 'title' value from the list. None if there is any error.
     """
     
-    get_one_field_from_registry_data(data, 'name')
+    return get_one_field_from_registry_data(data, 'name')
     
     
 def get_description(data):
@@ -67,7 +90,7 @@ def get_description(data):
         * {string} Return 'description' value from the list. None if there is any error.
     """
     
-    get_one_field_from_registry_data(data, 'description')
+    return get_one_field_from_registry_data(data, 'description')
     
     
 def get_link(data):
@@ -77,7 +100,7 @@ def get_link(data):
         * {string} Return 'link' value from the list. None if there is any error.
     """
     
-    get_one_field_from_registry_data(data, 'homepage')
+    return get_one_field_from_registry_data(data, 'homepage')
     
     
 def get_field(data):
@@ -156,18 +179,26 @@ def main_options(options):
 
     """
     
-    print ('>> Starting Elixir registry importing process...')
-
+    init_logger()
+    
+    
     ds_name = None
     delete_all_old_data = False
     registriesFromTime = None
 
-
+    paramsToLog = ''
     if options is not None:
         if ('ds_name' in options.keys()):
             ds_name = options['ds_name']
+            paramsToLog = paramsToLog + ' ds_name="'+ds_name+'"   '            
         if ('delete_all_old_data' in options.keys()):
             delete_all_old_data = options['delete_all_old_data']
+            paramsToLog = paramsToLog + ' delete_all_old_data='+str(delete_all_old_data)+''            
+        logger.info ('>> Starting Elixir registry importing process... params: '+paramsToLog)
+
+    else:
+        logger.info ('>> Starting Elixir registry importing process...')
+
         
             
     records = get_records()
@@ -176,25 +207,34 @@ def main_options(options):
         dbManager = dbFactory.get_default_db_manager(ds_name)
         
         if (delete_all_old_data is not None and delete_all_old_data):
-            dbManager.delete_data_by_conditions([['EQ','source',get_source_type_field()]])
+            registry_conditions = [['EQ','source',get_source_type_field()]]
+            previous_count = dbManager.count_data_by_conditions(registry_conditions)
+            dbManager.delete_data_by_conditions(registry_conditions)
+            new_count = dbManager.count_data_by_conditions(registry_conditions)
+            if (previous_count is not None and new_count is not None):
+                logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
         
+        numSuccess = 0
         for record in records:           
-            dbManager.insert_data({
+            success = dbManager.insert_data({
                 "title":get_title(record),
                 "notes":get_description(record),
                 "link":get_link(record),
                 "field":get_field(record),
                 "source":get_source_type_field(),
                 "insertion_date":get_insertion_date_field()
-
             })
-            
+            if success:
+                numSuccess=numSuccess+1
+                
+        logger.info ('Inserted '+str(numSuccess)+' new registries')   
+   
      
-    print ('< Finished Elixir registry importing process...')
+    logger.info('<< Finished Elixir registry importing process...')
    
 
 
 if __name__ == "__main__":
     #main_options({"ds_name":'test_core'})
-    main()
+    mainFullUpdating()
     

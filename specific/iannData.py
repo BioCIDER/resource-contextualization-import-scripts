@@ -3,10 +3,33 @@ import re
 import sys
 from datetime import datetime, timedelta, date, time
 import pysolr
+import logging
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
+
+
+
+logger = None
+
+def init_logger():
+    """
+        Function that initialises logging system
+    """
+    global logger
+    logger = logging.getLogger('iann_logs')
+    if (len(logger.handlers) == 0):           # We only create a StreamHandler if there aren't another one
+        streamhandler = logging.StreamHandler()
+        streamhandler.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
+        # create formatter
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        streamhandler.setFormatter(formatter)
+        # add formatter to ch
+        logger.addHandler(streamhandler)
+    
+
 
 
 def get_iann_data(registriesFromTime):
@@ -33,8 +56,8 @@ def get_iann_data(registriesFromTime):
         resultsIann = iannData.search(q='*:*', rows='5000', fq=myfq)
         return resultsIann
     except Exception as e:
-        print ("Exception asking for iAnn data")
-        print (e)
+        logger.error("Exception asking for iAnn data")
+        logger.error(e)
         return None
 
 
@@ -49,9 +72,9 @@ def get_one_field_from_iann_data(result, field_name):
     try:
        return format(result[field_name])
     except Exception as e:
-        print ("Error getting "+field_name+" from iAnn result:")
-        print (result)
-        print (e)
+        logger.error("Error getting "+field_name+" from iAnn result:")
+        logger.error(result)
+        logger.error(e)
         return None
 
 
@@ -62,7 +85,7 @@ def get_title(data):
         * {string} Return 'title' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'title')
+    return get_one_field_from_iann_data(data, 'title')
     
     
 def get_start(data):
@@ -72,7 +95,7 @@ def get_start(data):
         * {string} Return 'start' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'start')
+    return get_one_field_from_iann_data(data, 'start')
     
     
 def get_end(data):
@@ -82,7 +105,7 @@ def get_end(data):
         * {string} Return 'end' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'end')
+    return get_one_field_from_iann_data(data, 'end')
     
     
 def get_city(data):
@@ -92,7 +115,7 @@ def get_city(data):
         * {string} Return 'city' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'city')
+    return get_one_field_from_iann_data(data, 'city')
     
     
 def get_country(data):
@@ -102,7 +125,7 @@ def get_country(data):
         * {string} Return 'country' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'country')
+    return get_one_field_from_iann_data(data, 'country')
     
     
 def get_provider(data):
@@ -112,7 +135,7 @@ def get_provider(data):
         * {string} Return 'provider' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'provider')
+    return get_one_field_from_iann_data(data, 'provider')
     
     
 def get_link(data):
@@ -122,7 +145,7 @@ def get_link(data):
         * {string} Return 'link' value from the list. None if there is any error.
     """
     
-    get_one_field_from_iann_data(data, 'link')
+    return get_one_field_from_iann_data(data, 'link')
     
     
 def get_field(data):
@@ -178,8 +201,8 @@ def get_creation_date_field(data):
             datetime_object = datetime.strptime(date_string_list[0], '%Y-%m-%dT%H:%M:%SZ' )
             return datetime_object
         except Exception as e:
-            print ('Exception getting creation date field')
-            print(e)
+            logger.error('Exception getting creation date field')
+            logger.error(e)
             return None
     else:
         return None
@@ -227,6 +250,8 @@ def mainUpdating(registriesFromTime):
         Executes main_options function with a time from wich to add new registries.
         * registriesFromTime {datetime} time from registries will be obtained
     """
+    logger.info('mainUpdating')
+    logger.info(registriesFromTime)
     my_options = {}
     my_options['registriesFromTime'] = registriesFromTime
     main_options(my_options)
@@ -267,20 +292,26 @@ def main_options(options):
         See more eg: http://iann.pro/iann-web-services
     """
 
-    print ('>> Starting iann importing process...')
+    init_logger()
     
     ds_name = None
     delete_all_old_data = False
     registriesFromTime = None
 
+    paramsToLog = ''
     if options is not None:
         if ('ds_name' in options.keys()):
             ds_name = options['ds_name']
+            paramsToLog = paramsToLog + ' ds_name="'+ds_name+'"   '
         if ('delete_all_old_data' in options.keys()):
             delete_all_old_data = options['delete_all_old_data']
+            paramsToLog = paramsToLog + ' delete_all_old_data='+str(delete_all_old_data)+'   '
         if ('registriesFromTime' in options.keys()):
             registriesFromTime = options['registriesFromTime']
-    
+            paramsToLog = paramsToLog + ' registriesFromTime="'+str(registriesFromTime)+'"'
+        logger.info ('>> Starting iann importing process... params: '+paramsToLog)
+    else:
+        logger.info ('>> Starting iann importing process...')
 
     iann_data = get_iann_data(registriesFromTime)
     if iann_data is not None:
@@ -288,11 +319,19 @@ def main_options(options):
         dbManager = dbFactory.get_default_db_manager(ds_name)
         
         if (delete_all_old_data is not None and delete_all_old_data):
-            dbManager.delete_data_by_conditions([['EQ','source',get_source_type_field()]])
-        
+            iann_conditions = [['EQ','source',get_source_type_field()]]
+            previous_count = dbManager.count_data_by_conditions(iann_conditions)
+            dbManager.delete_data_by_conditions(iann_conditions)
+            new_count = dbManager.count_data_by_conditions(iann_conditions)
+            if (previous_count is not None and new_count is not None):
+                logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
+
+            
+        numSuccess = 0
         for result in iann_data:
+            
             if (result is not None):
-                dbManager.insert_data({
+                success = dbManager.insert_data({
                     "title":get_title(result),
                     "start":get_start(result),
                     "end":get_end(result),
@@ -305,13 +344,18 @@ def main_options(options):
                     "insertion_date":get_insertion_date_field(),
                     "created":get_creation_date_field(result)                    
                     })
-                
-    print ('< Finished iann importing process...')   
+                if success:
+                    numSuccess=numSuccess+1
+        
+        logger.info ('Inserted '+str(numSuccess)+' new registries')   
+              
+    logger.info ('<< Finished iann importing process.')   
 
 
 if __name__ == "__main__":
     # main_options({"ds_name":'test_core'})
     mainFullUpdating()
-    #now = datetime.now()
+    
+    #now = datetime.nown
     #oneweekbefore = now-timedelta(days=7)
     #mainUpdating(oneweekbefore)
