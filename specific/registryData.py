@@ -1,8 +1,8 @@
 import requests
 import json
-import pysolr
-
 import sys
+import datetime
+
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
@@ -90,39 +90,111 @@ def get_field(data):
     return 'Services Registry'
 
 
+def get_source_type_field():
+    """
+        Get source type of any registry obtained with this script.
+        * {string} Return source type value.
+    """
+    return get_elixir_registry_source_type()
+
+
+def get_elixir_registry_source_type():
+    """
+        Get specific data type of fields related with Elixir registry.
+        * {string} Return data type of Elixir registry fields.
+    """
+    return 'elixir_registry'
+
+
+def get_insertion_date_field():
+    """
+        Get insertion date of any registry obtained with this script.
+        * {date} Return source type value.
+    """
+    return datetime.datetime.now()
+
+
+
+
+###    ENTRY POINTS
+
+
 def main():
+    """
+        Executes main_options function with default configurations
+    """
     main_options(None)
+    
+
+    
+def mainFullUpdating():
+    """
+        Executes main_options function erasing all previous Elixir registry data
+    """
+    my_options = {}
+    my_options['delete_all_old_data'] = True
+    main_options(my_options)
+    
     
 def main_options(options):
     """
         Executes the main functionality of this script: it extracts JSON data from each record found on Elixir's registry
         and inserts its main data into the DB.
         * options {list} specific configurations for initialization.
-            ds_name: specific dataset/database to use with the DB manager
+            ds_name {string} specific dataset/database to use with the DB manager
+            delete_all_old_data {boolean} specifies if we should delete all previous Elixir registry data in our DataBase
+            registriesFromTime {date} time from registries will be obtained
+
+            
+        In this script we will insert these fields into each registry:
+            "title" {string} Title for the data registry.
+            "notes" {string} Description for the data registry.
+            "link" {string} Link to the data registry.
+            "field" {string} Default ('Services Registry');
+            "source" {string} Default ('ckan');
+            "insertion date" {date} Current date and time.
+
     """
     
     print ('>> Starting Elixir registry importing process...')
 
     ds_name = None
-    if options is not None:
-        ds_name = options['ds_name']
+    delete_all_old_data = False
+    registriesFromTime = None
 
+
+    if options is not None:
+        if ('ds_name' in options.keys()):
+            ds_name = options['ds_name']
+        if ('delete_all_old_data' in options.keys()):
+            delete_all_old_data = options['delete_all_old_data']
+        
+            
     records = get_records()
     if records is not None:
         dbFactory = DBFactory()
-        # print (dbFactory)
         dbManager = dbFactory.get_default_db_manager(ds_name)
-        # print (dbManager)
         
-        for record in records:
-            dbManager.insert_data({"title":get_title(record), "notes":get_description(record),
-                                   "link":get_link(record), "field":get_field(record)})
+        if (delete_all_old_data is not None and delete_all_old_data):
+            dbManager.delete_data_by_conditions([['EQ','source',get_source_type_field()]])
+        
+        for record in records:           
+            dbManager.insert_data({
+                "title":get_title(record),
+                "notes":get_description(record),
+                "link":get_link(record),
+                "field":get_field(record),
+                "source":get_source_type_field(),
+                "insertion_date":get_insertion_date_field()
 
+            })
+            
      
     print ('< Finished Elixir registry importing process...')
    
 
 
 if __name__ == "__main__":
-    main_options({"ds_name":'test_core'})
-    # main()
+    #main_options({"ds_name":'test_core'})
+    main()
+    
