@@ -183,9 +183,10 @@ def isDataMoreRecentThan(data, minimumDate):
     """  
     if minimumDate is not None:
         createdDate = get_created(data)
-        if createdDateString is not None:
+        if createdDate is not None:
             try:
-                return (minimumDate < createdDate)
+                comparison = (minimumDate < createdDate)
+                return comparison
             except Exception as e:
                 logger.error('Error operating with createdData')
                 logger.error(e)

@@ -250,8 +250,6 @@ def mainUpdating(registriesFromTime):
         Executes main_options function with a time from wich to add new registries.
         * registriesFromTime {datetime} time from registries will be obtained
     """
-    logger.info('mainUpdating')
-    logger.info(registriesFromTime)
     my_options = {}
     my_options['registriesFromTime'] = registriesFromTime
     main_options(my_options)
