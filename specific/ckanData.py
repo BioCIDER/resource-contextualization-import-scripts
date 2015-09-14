@@ -3,6 +3,7 @@ import requests
 import sys
 from datetime import datetime, timedelta, date, time
 import logging
+from logging.handlers import TimedRotatingFileHandler
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
@@ -22,13 +23,20 @@ def init_logger():
     logger = logging.getLogger('ckan_logs')
     if (len(logger.handlers) == 0):           # We only create a StreamHandler if there aren't another one
         streamhandler = logging.StreamHandler()
-        streamhandler.setLevel(logging.INFO)
+        streamhandler.setLevel(logging.INFO)      
+        
+        filehandler = logging.handlers.TimedRotatingFileHandler('../../resource-contextualization-logs/context-ckan.log', when='w0')
+        filehandler.setLevel(logging.INFO)
+        
         logger.setLevel(logging.INFO)
+        
         # create formatter
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         streamhandler.setFormatter(formatter)
-        # add formatter to ch
+        filehandler.setFormatter(formatter)
+        # add formatters to logger
         logger.addHandler(streamhandler)
+        logger.addHandler(filehandler)
     
 
 

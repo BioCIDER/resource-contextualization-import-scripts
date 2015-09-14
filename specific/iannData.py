@@ -3,12 +3,33 @@ import re
 import sys
 from datetime import datetime, timedelta, date, time
 import pysolr
+import threading
 import logging
+from logging.handlers import TimedRotatingFileHandler
+
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
 
+
+
+
+'''
+class IannDataLocking(object):
+    
+    # Lock object to ensure only one thread is updating iann registries at the same time
+    iann_lock = threading.Lock()
+    
+    @staticmethod
+    def lock():
+        iann_lock.acquire()
+        
+    @staticmethod
+    def release():
+        iann_lock.release()    
+    
+'''
 
 
 logger = None
@@ -21,13 +42,20 @@ def init_logger():
     logger = logging.getLogger('iann_logs')
     if (len(logger.handlers) == 0):           # We only create a StreamHandler if there aren't another one
         streamhandler = logging.StreamHandler()
-        streamhandler.setLevel(logging.INFO)
+        streamhandler.setLevel(logging.INFO)      
+        
+        filehandler = logging.handlers.TimedRotatingFileHandler('../../resource-contextualization-logs/context-iann.log', when='w0')
+        filehandler.setLevel(logging.INFO)
+        
         logger.setLevel(logging.INFO)
+        
         # create formatter
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         streamhandler.setFormatter(formatter)
-        # add formatter to ch
+        filehandler.setFormatter(formatter)
+        # add formatters to logger
         logger.addHandler(streamhandler)
+        logger.addHandler(filehandler)
     
 
 
@@ -289,7 +317,7 @@ def main_options(options):
 
         See more eg: http://iann.pro/iann-web-services
     """
-
+    # IannDataLocking.lock()
     init_logger()
     
     ds_name = None
@@ -347,7 +375,9 @@ def main_options(options):
         
         logger.info ('Inserted '+str(numSuccess)+' new registries')   
               
-    logger.info ('<< Finished iann importing process.')   
+    logger.info ('<< Finished iann importing process.')
+    
+    # IannDataLocking.release()  
 
 
 if __name__ == "__main__":

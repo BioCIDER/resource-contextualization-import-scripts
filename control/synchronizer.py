@@ -17,6 +17,7 @@ import time
 import logging
 import sys
 from datetime import datetime, timedelta, date
+from logging.handlers import TimedRotatingFileHandler
 
 
 MAX_THREADS = min(2, mp.cpu_count()) 
@@ -59,13 +60,20 @@ def init_logger():
     logger = logging.getLogger('sync_logs')
     if (len(logger.handlers) == 0):           # We only create a StreamHandler if there aren't another one
         streamhandler = logging.StreamHandler()
-        streamhandler.setLevel(logging.INFO)
+        streamhandler.setLevel(logging.INFO)      
+        
+        filehandler = logging.handlers.TimedRotatingFileHandler('../../resource-contextualization-logs/context-control.log', when='w0')
+        filehandler.setLevel(logging.INFO)
+        
         logger.setLevel(logging.INFO)
+        
         # create formatter
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         streamhandler.setFormatter(formatter)
-        # add formatter to ch
+        filehandler.setFormatter(formatter)
+        # add formatters to logger
         logger.addHandler(streamhandler)
+        logger.addHandler(filehandler)
     
         
 
@@ -108,11 +116,10 @@ def start_blocking_scheduler():
     logger.info('SYNCHRONIZING PROCESS... starting blocking scheduler')
     sched = BlockingScheduler()
     updating_1h_job = sched.add_job(scripts_async_execution, 'cron', minute="0", args=[[UPDATING_1H_PROCESSES, getPastHour]])
-    full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0", args=[[FULL_UPDATING_1D_PROCESSES, getPastDay]])
-    full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6, args=[[FULL_UPDATING_1W_PROCESSES, getPastWeek]])
+    full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0",minute="30", args=[[FULL_UPDATING_1D_PROCESSES, getPastDay]])
+    full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6,hour="2",minute="30", args=[[FULL_UPDATING_1W_PROCESSES, getPastWeek]])
 
     try:
-        logging.basicConfig()
         sched.start()
     except (KeyboardInterrupt, SystemExit):
         logger.info('Stopping blocking scheduler')
@@ -128,13 +135,11 @@ def start_background_scheduler():
     logger.info('SYNCHRONIZING PROCESS... starting background scheduler')
 
     sched = BackgroundScheduler()
-    #job = sched.add_job(synchronize_job,'cron' , id='synchronize_job', minute=0)
 
     updating_1h_job = sched.add_job(scripts_async_execution, 'cron', minute="0", args=[[UPDATING_1H_PROCESSES, getPastHour]])
     full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0", args=[[FULL_UPDATING_1D_PROCESSES, getPastDay]])
     full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6, args=[[FULL_UPDATING_1W_PROCESSES, getPastWeek]])
 
-    logging.basicConfig()
     sched.start()
     
     try:
