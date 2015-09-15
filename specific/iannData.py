@@ -28,8 +28,32 @@ class IannDataLocking(object):
     @staticmethod
     def release():
         iann_lock.release()    
+   
+'''   
     
-'''
+"""
+    Dictionary with the relationships between special iAnn field terms and EDAM terms.
+"""
+field_edam_relations = {
+            'Bioinformatics'            :'Bioinformatics',
+            'Biostatistics'             :'Statistics',
+          #   'Biotherapeutics'           :'',  is not in the mapping list
+            'Epigenomics'               :'Epigenomics',
+            'Genomics'                  :'Genomics',
+            'Immunology'                :'Immunology',
+            'Medicine'                  :'Medicine',
+            'Metabolomics'              :'Metabolomics',
+            'Metagenomics'              :'Metagenomics',
+            'Pathology'                 :'Pathology',
+            'Pharmacology'              :'Pharmacology',
+            'Physiology'                :'Physiology',
+            'Proteomics'                :'Proteomics',
+            'Systems Biology'           :'Systems biology',
+            'Transcriptomics'           :'Transcriptomics' 
+        }
+
+
+
 
 
 logger = None
@@ -176,16 +200,40 @@ def get_link(data):
     return get_one_field_from_iann_data(data, 'link')
     
     
+ 
+def get_edam_field_value(original_value):
+    """
+        Converts one field to another within EDAM ontology.
+        * original_value {string} original field value.
+        * {string} Return 'field' value adapted with EDAM ontology.
+    """
+    if original_value is not None:
+        global field_edam_relations
+        edam_value = field_edam_relations.get(original_value,original_value)
+        return edam_value    
+    else:
+        return None
+    
+    
 def get_field(data):
     """
-        Get 'field' field from the data of one iAnn event.
+        Get 'field' field from the data of one iAnn event. It can be adapted to EDAM vocabulary.
         * data {list} one event's iAnn data.
-        * {string} Return 'link' value from the list. None if there is any error.
+        * {string or list} Return 'field' value from the list. None if there is any error.
     """
     
     my_field = get_one_field_from_iann_data(data, 'field')
     if my_field is not None:
-        return remove_unicode_chars(my_field)
+        clear_value = remove_unicode_chars(my_field)
+        if isinstance(clear_value, basestring):
+            edam_value = get_edam_field_value(clear_value)
+            return edam_value
+        else:
+            edam_value = []
+            for each_value in clear_value: 
+                edam_value.append(get_edam_field_value(each_value))
+            return edam_value
+    
     else:
         return None
     
