@@ -236,6 +236,7 @@ def mainUpdating(registriesFromTime):
     """
     my_options = {}
     my_options['registriesFromTime'] = registriesFromTime
+    my_options['updateRegistries'] = True
     main_options(my_options)
     
        
@@ -245,6 +246,17 @@ def mainFullUpdating():
     """
     my_options = {}
     my_options['delete_all_old_data'] = True
+    my_options['updateRegistries'] = True
+    main_options(my_options)
+    
+    
+def mainFullDeleting():
+    """
+        Executes main_options function updating all registries and erasing all previous ckan data
+    """
+    my_options = {}
+    my_options['delete_all_old_data'] = True
+    my_options['updateRegistries'] = False
     main_options(my_options)
     
     
@@ -256,8 +268,8 @@ def main_options(options):
             ds_name {string} specific dataset/database to use with the DB manager
             delete_all_old_data {boolean} specifies if we should delete all previous ckanData in our DataBase
             registriesFromTime {datetime} time from registries will be obtained
+            updateRegistries {boolean} if we want to get new regiestries or not
 
-        
     """
 
     init_logger()
@@ -265,39 +277,46 @@ def main_options(options):
     ds_name = None
     delete_all_old_data = False
     registriesFromTime = None
-    paramsToLog = ''
+    updateRegistries = True
 
     if options is not None:
+        logger.info ('>> Starting ckanData importing process... params: ')
         if ('ds_name' in options.keys()):
             ds_name = options['ds_name']
-            paramsToLog = paramsToLog + ' ds_name="'+ds_name+'"   '
+            logger.info ('ds_name='+ds_name)
         if ('delete_all_old_data' in options.keys()):
             delete_all_old_data = options['delete_all_old_data']
-            paramsToLog = paramsToLog + ' delete_all_old_data='+str(delete_all_old_data)+'   '
+            logger.info ('delete_all_old_data='+str(delete_all_old_data))
         if ('registriesFromTime' in options.keys()):
             registriesFromTime = options['registriesFromTime']
-            paramsToLog = paramsToLog + ' registriesFromTime="'+str(registriesFromTime)+'"'
-        logger.info ('>> Starting ckanData importing process... params: '+paramsToLog)
+            logger.info ('registriesFromTime='+str(registriesFromTime))
+        if ('updateRegistries' in options.keys()):
+            updateRegistries = options['updateRegistries']
+            logger.info ('updateRegistries='+str(updateRegistries))
+            
 
     else:
         logger.info ('>> Starting ckanData importing process...')
 
+
+    materials_names = None
+    if updateRegistries:   
+        materials_names = get_materials_names()
     
+    dbFactory = DBFactory()
+    # print (dbFactory)
+    dbManager = dbFactory.get_default_db_manager(ds_name)
+    # print (dbManager)
+    if (delete_all_old_data is not None and delete_all_old_data):
+        ckan_conditions = [['EQ','source',get_source_type_field()]]
+        previous_count = dbManager.count_data_by_conditions(ckan_conditions)
+        dbManager.delete_data_by_conditions(ckan_conditions)
+        new_count = dbManager.count_data_by_conditions(ckan_conditions)
+        if (previous_count is not None and new_count is not None):
+            logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
     
-    materials_names = get_materials_names()
-    if materials_names is not None:
-        dbFactory = DBFactory()
-        # print (dbFactory)
-        dbManager = dbFactory.get_default_db_manager(ds_name)
-        # print (dbManager)
-        if (delete_all_old_data is not None and delete_all_old_data):
-            ckan_conditions = [['EQ','source',get_source_type_field()]]
-            previous_count = dbManager.count_data_by_conditions(ckan_conditions)
-            dbManager.delete_data_by_conditions(ckan_conditions)
-            new_count = dbManager.count_data_by_conditions(ckan_conditions)
-            if (previous_count is not None and new_count is not None):
-                logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
-        
+       
+    if materials_names is not None:    
         numSuccess = 0
         for material_name in materials_names:
             json_data = get_json_from_material_name(material_name)

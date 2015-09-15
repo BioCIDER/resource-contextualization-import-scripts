@@ -160,11 +160,24 @@ def main():
     
 def mainFullUpdating():
     """
+        Executes main_options function updating all registries and erasing all previous
+        Elixir registry data
+    """
+    my_options = {}
+    my_options['delete_all_old_data'] = True
+    my_options['updateRegistries'] = True
+    main_options(my_options)
+    
+    
+def mainFullDeleting():
+    """
         Executes main_options function erasing all previous Elixir registry data
     """
     my_options = {}
     my_options['delete_all_old_data'] = True
+    my_options['updateRegistries'] = False
     main_options(my_options)
+    
     
     
 def main_options(options):
@@ -175,6 +188,7 @@ def main_options(options):
             ds_name {string} specific dataset/database to use with the DB manager
             delete_all_old_data {boolean} specifies if we should delete all previous Elixir registry data in our DataBase
             registriesFromTime {date} time from registries will be obtained
+            updateRegistries {boolean} if we want to get new regiestries or not
 
             
         In this script we will insert these fields into each registry:
@@ -193,34 +207,40 @@ def main_options(options):
     ds_name = None
     delete_all_old_data = False
     registriesFromTime = None
+    updateRegistries = True
 
-    paramsToLog = ''
     if options is not None:
+        logger.info ('>> Starting Elixir registry importing process... params: ')
         if ('ds_name' in options.keys()):
             ds_name = options['ds_name']
-            paramsToLog = paramsToLog + ' ds_name="'+ds_name+'"   '            
+            logger.info ('ds_name='+ds_name)
         if ('delete_all_old_data' in options.keys()):
             delete_all_old_data = options['delete_all_old_data']
-            paramsToLog = paramsToLog + ' delete_all_old_data='+str(delete_all_old_data)+''            
-        logger.info ('>> Starting Elixir registry importing process... params: '+paramsToLog)
+            logger.info ('delete_all_old_data='+str(delete_all_old_data))
+        if ('updateRegistries' in options.keys()):
+            updateRegistries = options['updateRegistries']
+            logger.info ('updateRegistries='+str(updateRegistries))    
 
     else:
         logger.info ('>> Starting Elixir registry importing process...')
 
+    records = None
+    if updateRegistries:         
+        records = get_records()
+     
+    dbFactory = DBFactory()
+    dbManager = dbFactory.get_default_db_manager(ds_name)
+    
+    if (delete_all_old_data is not None and delete_all_old_data):
+        registry_conditions = [['EQ','source',get_source_type_field()]]
+        previous_count = dbManager.count_data_by_conditions(registry_conditions)
+        dbManager.delete_data_by_conditions(registry_conditions)
+        new_count = dbManager.count_data_by_conditions(registry_conditions)
+        if (previous_count is not None and new_count is not None):
+            logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
+    
         
-            
-    records = get_records()
     if records is not None:
-        dbFactory = DBFactory()
-        dbManager = dbFactory.get_default_db_manager(ds_name)
-        
-        if (delete_all_old_data is not None and delete_all_old_data):
-            registry_conditions = [['EQ','source',get_source_type_field()]]
-            previous_count = dbManager.count_data_by_conditions(registry_conditions)
-            dbManager.delete_data_by_conditions(registry_conditions)
-            new_count = dbManager.count_data_by_conditions(registry_conditions)
-            if (previous_count is not None and new_count is not None):
-                logger.info ('Deleted '+str( (previous_count-new_count) )+' registries')   
         
         numSuccess = 0
         for record in records:           
