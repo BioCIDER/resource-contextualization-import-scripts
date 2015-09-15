@@ -52,8 +52,8 @@ def get_materials_names():
         tessData = requests.get('http://tess.elixir-uk.org/api/3/action/package_list')
         names_list = json.loads(tessData.text).get('result')
         return names_list
-    except RequestException as e:
-        logger.error ("RequestException asking for Tess data")
+    except Exception as e:
+        logger.error ("Exception asking for Tess data")
         logger.error (e)
         return None
 
