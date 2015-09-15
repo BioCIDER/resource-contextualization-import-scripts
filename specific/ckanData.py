@@ -4,6 +4,8 @@ import sys
 from datetime import datetime, timedelta, date, time
 import logging
 from logging.handlers import TimedRotatingFileHandler
+import ssl
+import urllib2
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
@@ -49,8 +51,12 @@ def get_materials_names():
     """
         
     try:
-        tessData = requests.get('http://tess.elixir-uk.org/api/3/action/package_list')
-        names_list = json.loads(tessData.text).get('result')
+	context = ssl._create_unverified_context()
+	tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
+	tessData = tessResponse.read()
+	# Direct call gaves some problems related with SSL handshake.
+	# tessData = requests.get('https://tess.elixir-uk.org/api/3/action/package_list')
+        names_list = json.loads(tessData).get('result')
         return names_list
     except Exception as e:
         logger.error ("Exception asking for Tess data")
@@ -72,17 +78,21 @@ def get_json_from_material_name(material_name):
     """
     
     try:
-        results = requests.get('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name)
+	context = ssl._create_unverified_context()
+        materialResponse = urllib2.urlopen('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name, context=context)
+	results = materialResponse.read()
+        # results = requests.get('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name)
         try:           
-            json_data = json.loads(results.text)
+            json_data = json.loads(results)
             return json_data
         except ValueError as e:
             logger.error ("error at", json.last_error_position)
             logger.error(e)
             return None
         
-    except RequestException:
-        print "RequestException asking for Tess data"
+    except Exception as e:
+        logger.error ("RequestException asking for Tess data")
+	logger.error(e)
         return None
     
   
