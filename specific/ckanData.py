@@ -51,11 +51,11 @@ def get_materials_names():
     """
         
     try:
-	context = ssl._create_unverified_context()
-	tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
-	tessData = tessResponse.read()
-	# Direct call gaves some problems related with SSL handshake.
-	# tessData = requests.get('https://tess.elixir-uk.org/api/3/action/package_list')
+        context = ssl._create_unverified_context()
+        tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
+        tessData = tessResponse.read()
+        # Direct call gaves some problems related with SSL handshake.
+        # tessData = requests.get('https://tess.elixir-uk.org/api/3/action/package_list')
         names_list = json.loads(tessData).get('result')
         return names_list
     except Exception as e:
@@ -78,9 +78,9 @@ def get_json_from_material_name(material_name):
     """
     
     try:
-	context = ssl._create_unverified_context()
+        context = ssl._create_unverified_context()
         materialResponse = urllib2.urlopen('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name, context=context)
-	results = materialResponse.read()
+        results = materialResponse.read()
         # results = requests.get('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name)
         try:           
             json_data = json.loads(results)
@@ -92,7 +92,7 @@ def get_json_from_material_name(material_name):
         
     except Exception as e:
         logger.error ("RequestException asking for Tess data")
-	logger.error(e)
+        logger.error(e)
         return None
     
   
