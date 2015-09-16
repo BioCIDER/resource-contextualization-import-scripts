@@ -7,8 +7,6 @@
 # https://media.readthedocs.org/pdf/apscheduler/latest/apscheduler.pdf
 # sudo python setup.py install
 # See CRON documentation at : http://apscheduler.readthedocs.org/en/latest/modules/triggers/cron.html
-
-
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -37,12 +35,12 @@ def getPastHour():
     
 # Functions to be executed every day for full updatings
 FULL_UPDATING_1D_PROCESSES = [registryData.mainFullUpdating]
-def getPastDay():
+def getPastDay():  # For now this function is not being used because of the full updating
     return datetime.now()-timedelta(days=1)
 
 # Functions to be executed every week for full updatings
 FULL_UPDATING_1W_PROCESSES = [iannData.mainFullUpdating, ckanData.mainFullUpdating]
-def getPastWeek():
+def getPastWeek(): # For now this function is not being used because of the full updating
     return datetime.now()-timedelta(days=7)
  
 
@@ -87,7 +85,7 @@ def scripts_async_execution(params):
         *       retrievingTimeFunction {function} Function that returns a datetimeobject from wich get last results.
     """
     processes = params[0]
-    retrievingTimeFunction = params[1]
+        
     updatingTime = None
     if (len(params)>1):
         updatingTime = params[1]
@@ -99,7 +97,10 @@ def scripts_async_execution(params):
     for process_number in range(0, len(processes)):
         # full call example : pool.apply_async(foo_pool, args = (i, ), callback = log_result)
         logger.info('SYNCHRONIZING PROCESS... executing '+str(processes[process_number])+' function')
-        pool.apply_async(processes[process_number],[retrievingTimeFunction()] )
+        if updatingTime is None:
+            pool.apply_async(processes[process_number])
+        else:
+            pool.apply_async(processes[process_number],[updatingTime()] )
         
     pool.close()
     pool.join()
@@ -116,8 +117,8 @@ def start_blocking_scheduler():
     logger.info('SYNCHRONIZING PROCESS... starting blocking scheduler')
     sched = BlockingScheduler()
     updating_1h_job = sched.add_job(scripts_async_execution, 'cron', minute="0", args=[[UPDATING_1H_PROCESSES, getPastHour]])
-    full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0",minute="30", args=[[FULL_UPDATING_1D_PROCESSES, getPastDay]])
-    full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6,hour="2",minute="30", args=[[FULL_UPDATING_1W_PROCESSES, getPastWeek]])
+    full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0", minute="30", args=[[FULL_UPDATING_1D_PROCESSES]])
+    full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6,hour="2",minute="30", args=[[FULL_UPDATING_1W_PROCESSES]])
 
     try:
         sched.start()
@@ -136,9 +137,9 @@ def start_background_scheduler():
 
     sched = BackgroundScheduler()
 
-    updating_1h_job = sched.add_job(scripts_async_execution, 'cron', minute="0", args=[[UPDATING_1H_PROCESSES, getPastHour]])
-    full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0", args=[[FULL_UPDATING_1D_PROCESSES, getPastDay]])
-    full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6, args=[[FULL_UPDATING_1W_PROCESSES, getPastWeek]])
+    updating_1h_job = sched.add_job(scripts_async_execution, 'cron', minute="00", args=[[UPDATING_1H_PROCESSES, getPastHour]])
+    full_updating_1d_job = sched.add_job(scripts_async_execution, 'cron', hour="0",minute="30", args=[[FULL_UPDATING_1D_PROCESSES]])
+    full_updating_1w_job = sched.add_job(scripts_async_execution, 'cron', day=6,hour="2",minute="30", args=[[FULL_UPDATING_1W_PROCESSES]])
 
     sched.start()
     
