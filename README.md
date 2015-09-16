@@ -12,26 +12,41 @@ Version tested with this application is 2.7.
 
 Also, you need to install **APScheduler** to be able to run the importing synchronization script. Download it from  [APScheduler downloads](https://pypi.python.org/pypi/APScheduler/) 
 
-After downloading it, you only need to execute
+After downloading and extract it, you only need to execute
 
 sudo python setup.py install
 
 Last version tested is 3.0.3
 
 
+Finally, if you want to execute the synchronizer as a service, you will need to install **python-daemon** library. Download it from  [python-daemon downloads](https://pypi.python.org/pypi/python-daemon/#downloads) 
+
+In the same way, after downloading it you only need to execute
+
+sudo python setup.py install
+
+Last version tested is 2.0.6
+
+
 ### synchronizer.py
 
-This script manages which specific scripts are executed, and when they are. To add a new one, you need to upload it to /specific folder and add it its main() function to PROCESSES list.
+This script manages which specific scripts are executed, and when they are. To add a new one, you need to upload it to /specific folder and add its main() function to the proper UPDATING_XX_PROCESSES list.
 
-Currently, all processes are executed asynchronously every hour.
+Currently, there are different processes executed asynchronously with different schedules: every hour, every day or every week.
 
 See CRON documentation at : [APScheduler docs](http://apscheduler.readthedocs.org/en/latest/modules/triggers/cron.html) 
+
+
+### synchronizer-daemon.py
+
+This script should be used when you desire to execute synchronizer.py as a service, without that process depends on the console.
+
 
 ### Specific importing scripts
 
 Currently we have 3 different specific scripts into /specific folder: **ckanData.py** (to import ELIXIR training materials), **iannData.py** (events data) and **registryData.py** (ELIXIR records).
 
-You can execute them independently or through synchronizer.py.
+You can execute them independently or through synchronizer.py. Also, they have different entry points with different utility functions to facilitate using the main functionalities.
 
 
 ## Contributing
