@@ -97,6 +97,19 @@ def get_json_from_material_name(material_name):
         return None
     
   
+def get_one_field_from_tm(data, root_tag):
+    """
+        Get one field value from the main data of one training material.
+        * data {list} data of one training material.
+        * root_tag {string} name of the root field to be obtained.
+        * {string} Return the field value requested. None if there is any error.
+    """
+    try:
+        return format(data.get(root_tag))
+    except Exception:
+        logger.error ("Error getting "+root_tag+" root tag from training materials JSON")
+        return None
+  
 
 def get_one_field_from_tm_data(data, field_name):
     """
@@ -105,7 +118,7 @@ def get_one_field_from_tm_data(data, field_name):
         * field_name {string} name of the field to be obtained.
         * {string} Return the field value requested. None if there is any error.
     """
-    get_one_field_from_custom_tm_data(data, 'result', field_name)
+    return get_one_field_from_custom_tm_data(data, 'result', field_name)
   
 
 def get_one_field_from_custom_tm_data(data, source_tag, field_name):
@@ -242,6 +255,16 @@ def get_audience(data):
     else:
         return return_value
     
+
+
+def get_link(data):
+    """
+        Get 'url' field from the data of one training material.
+        * data {list} data of one training material.
+        * {datetime} Return 'url' value from the list. None if there is any error.
+    """    
+    return get_one_field_from_tm_data(data, 'url')
+
 
 def get_created(data):
     """
@@ -401,7 +424,8 @@ def main_options(options):
                         "resource_type":get_resource_type_field(),
                         "insertion_date":get_insertion_date_field(),
                         "created":get_created(json_data),
-                        "audience":get_audience(json_data)
+                        "audience":get_audience(json_data),
+                        "link":get_link(json_data)
                         })
                     if success:
                         numSuccess=numSuccess+1
