@@ -35,21 +35,21 @@ class IannDataLocking(object):
     Dictionary with the relationships between special iAnn field terms and EDAM terms.
 """
 field_edam_relations = {
-            'Bioinformatics'            :'Bioinformatics',
-            'Biostatistics'             :'Statistics',
-          #   'Biotherapeutics'           :'',  is not in the mapping list
-            'Epigenomics'               :'Epigenomics',
-            'Genomics'                  :'Genomics',
-            'Immunology'                :'Immunology',
-            'Medicine'                  :'Medicine',
-            'Metabolomics'              :'Metabolomics',
-            'Metagenomics'              :'Metagenomics',
-            'Pathology'                 :'Pathology',
-            'Pharmacology'              :'Pharmacology',
-            'Physiology'                :'Physiology',
-            'Proteomics'                :'Proteomics',
-            'Systems Biology'           :'Systems biology',
-            'Transcriptomics'           :'Transcriptomics' 
+            'Bioinformatics'            :['Bioinformatics'],
+            'Biostatistics'             :['Statistics','Biology'],
+            'Biotherapeutics'           :['Pathology','Medicine'],
+            'Epigenomics'               :['Epigenomics'],
+            'Genomics'                  :['Genomics'],
+            'Immunology'                :['Immunology'],
+            'Medicine'                  :['Medicine'],
+            'Metabolomics'              :['Metabolomics'],
+            'Metagenomics'              :['Metagenomics'],
+            'Pathology'                 :['Pathology'],  
+            'Pharmacology'              :['Pharmacology'],
+            'Physiology'                :['Physiology'],
+            'Proteomics'                :['Proteomics'],
+            'Systems Biology'           :['Systems biology'],
+            'Transcriptomics'           :['Transcriptomics'] 
         }
 
 
@@ -205,51 +205,64 @@ def get_edam_field_value(original_value):
     """
         Converts one field to another within EDAM ontology.
         * original_value {string} original field value.
-        * {string} Return 'field' value adapted with EDAM ontology.
+        * {List} Return 'field' value adapted with EDAM ontology.
     """
     if original_value is not None:
         global field_edam_relations
-        edam_value = field_edam_relations.get(original_value,original_value)
-        return edam_value    
+        return field_edam_relations.get(original_value,[original_value])
     else:
-        return None
+        return []
     
     
 def get_field(data):
     """
         Get 'field' field from the data of one iAnn event. It can be adapted to EDAM vocabulary.
         * data {list} one event's iAnn data.
-        * {string or list} Return 'field' value from the list. None if there is any error.
+        * {List} Return 'field' value from the list. None if there is any error.
     """
-    
+    edam_values = []
     my_field = get_one_field_from_iann_data(data, 'field')
     if my_field is not None:
         clear_value = remove_unicode_chars(my_field)
         if isinstance(clear_value, basestring):
-            edam_value = get_edam_field_value(clear_value)
-            return edam_value
+            edam_values = get_edam_field_value(clear_value)
+            return edam_values
         else:
-            edam_value = []
             for each_value in clear_value: 
-                edam_value.append(get_edam_field_value(each_value))
-            return edam_value
-    
+                edam_values = edam_values + get_edam_field_value(each_value)
+            return edam_values
     else:
         return None
     
 
-def get_source_type_field():
+def get_resource_type_field():
     """
-        Get source type of any registry obtained with this script.
-        * {string} Return source type value.
+        Get resource type of any registry obtained with this script.
+        * {string} Return resource type value.
     """
-    return get_iann_source_type()
+    return get_iann_resource_type()
 
 
-def get_iann_source_type():
+def get_iann_resource_type():
     """
         Get specific data type of fields related with iAnn.
         * {string} Return data type of iAnn fields.
+    """
+    return 'Event'
+
+
+def get_source_field():
+    """
+        Get the source of any event obtained with this script.
+        * {string} Return source token.
+    """
+    return get_iann_source()
+
+
+def get_iann_source():
+    """
+      Get the specific source of fields related with iAnn.
+        * {string} Return a representative token of iann fields source.
     """
     return 'iann'
 
@@ -411,7 +424,7 @@ def main_options(options):
     dbManager = dbFactory.get_default_db_manager(ds_name)
     
     if (delete_all_old_data is not None and delete_all_old_data):
-        iann_conditions = [['EQ','source',get_source_type_field()]]
+        iann_conditions = [['EQ','source',get_source_field()]]
         previous_count = dbManager.count_data_by_conditions(iann_conditions)
         dbManager.delete_data_by_conditions(iann_conditions)
         new_count = dbManager.count_data_by_conditions(iann_conditions)
@@ -431,7 +444,8 @@ def main_options(options):
                     "field":get_field(result),
                     "provider":get_provider(result),
                     "link":get_link(result),
-                    "source":get_source_type_field(),
+                    "source":get_source_field(),
+                    "resource_type":get_resource_type_field(),
                     "insertion_date":get_insertion_date_field(),
                     "created":get_creation_date_field(result)                    
                     })

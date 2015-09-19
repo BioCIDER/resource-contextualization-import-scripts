@@ -1,4 +1,5 @@
 import json
+import re
 import requests
 import sys
 from datetime import datetime, timedelta, date, time
@@ -96,17 +97,41 @@ def get_json_from_material_name(material_name):
         return None
     
   
+def get_one_field_from_tm(data, root_tag):
+    """
+        Get one field value from the main data of one training material.
+        * data {list} data of one training material.
+        * root_tag {string} name of the root field to be obtained.
+        * {string} Return the field value requested. None if there is any error.
+    """
+    try:
+        return format(data.get(root_tag))
+    except Exception:
+        logger.error ("Error getting "+root_tag+" root tag from training materials JSON")
+        return None
+  
 
 def get_one_field_from_tm_data(data, field_name):
     """
-        Get one field value from the data of one training material.
+        Get one field value from the main data of one training material.
         * data {list} data of one training material.
         * field_name {string} name of the field to be obtained.
         * {string} Return the field value requested. None if there is any error.
     """
+    return get_one_field_from_custom_tm_data(data, 'result', field_name)
+  
+
+def get_one_field_from_custom_tm_data(data, source_tag, field_name):
+    """
+        Get one field value from the data of one training material.
+        * data {list} data of one training material.
+        * field_name {string} name of the field to be obtained.
+        * source_tag {string} root tag from the field to be obtained.
+        * {string} Return the field value requested. None if there is any error.
+    """
     
     try:
-        return format(data['result'].get(field_name))
+        return format(data[source_tag].get(field_name))
     except Exception:
         logger.error ("Error getting "+field_name+" from training materials JSON")
         return None
@@ -136,31 +161,57 @@ def get_field(data):
     """
         Get 'field' field from the data of one training material.
         * data {list} data of one training material.
-        * {string} Return 'field' value from the list. None if there is any error.
+        * {string or list} Return 'field' value from the list. None if there is any error.
     """
-    return get_ckan_data_type()
+    my_field = get_one_field_from_tm_data(data, 'tags')
+    return_value = []
+    default_value = 'Bioinformatics'
+    if my_field is not None:
+        my_field_converted = eval(my_field)
+        
+        for each_field in my_field_converted:
+            try:
+                term = each_field.get('display_name')
+                return_value.append(term)
+            except Exception as e:
+                logger.error("Error getting 'display_name' field of "+my_field+" tags:")
+                logger.error(e)
+        if len(return_value)==0:
+            return_value.append(default_value)
+        return return_value
+    else:
+        return_value.append(default_value)
+        return return_value
 
 
-def get_ckan_data_type():
+def get_resource_type_field():
     """
-        Get specific data type of fields related with CKAN.
-        * {string} Return data type of ckan fields.
-    """
-    return 'Training Materials'
-
-
-def get_source_type_field():
-    """
-        Get source type of any registry obtained with this script.
+        Get resource type of any registry obtained with this script.
         * {string} Return source type value.
     """
-    return get_ckan_source_type()
+    return get_ckan_resource_type()
 
 
-def get_ckan_source_type():
+def get_ckan_resource_type():
     """
         Get specific data type of fields related with CKAN.
         * {string} Return data type of ckan fields.
+    """
+    return 'Training Material'
+
+
+def get_source_field():
+    """
+        Get the source of any registry obtained with this script.
+        * {string} Return source token.
+    """
+    return get_ckan_source()
+
+
+def get_ckan_source():
+    """
+        Get the specific source of fields related with CKAN.
+        * {string} Return a representative token of ckan fields source.
     """
     return 'ckan'
 
@@ -171,6 +222,48 @@ def get_insertion_date_field():
         * {date} Return source type value.
     """
     return datetime.now()
+
+
+def get_audience(data):
+    """
+        Get 'audience' field from the data of one training material.
+        * data {list} data of one training material.
+        * {list} Return 'field' value from the list. None if there is any error.
+    """
+    resources = None
+    try:
+        result = data.get('result')
+        resources = result.get('resources')
+    except Exception as e:
+        logger.error("Error getting 'resources' from 'result' tag:")
+        logger.error(e)
+        
+    return_value = []
+    if resources is not None and len(resources)>0:
+        try:
+            resources_content = resources[0]
+            audience = resources_content.get('audience')
+            audience_terms = []
+            if audience is not None:
+                audience_terms = eval(audience)
+            for each_field in audience_terms:
+                return_value.append(each_field)
+        except Exception as e:
+            logger.error("Error getting audience field")
+            logger.error(e)    
+        return return_value
+    else:
+        return return_value
+    
+
+
+def get_link(data):
+    """
+        Get 'url' field from the data of one training material.
+        * data {list} data of one training material.
+        * {datetime} Return 'url' value from the list. None if there is any error.
+    """    
+    return get_one_field_from_tm_data(data, 'url')
 
 
 def get_created(data):
@@ -308,7 +401,7 @@ def main_options(options):
     dbManager = dbFactory.get_default_db_manager(ds_name)
     # print (dbManager)
     if (delete_all_old_data is not None and delete_all_old_data):
-        ckan_conditions = [['EQ','source',get_source_type_field()]]
+        ckan_conditions = [['EQ','source',get_source_field()]]
         previous_count = dbManager.count_data_by_conditions(ckan_conditions)
         dbManager.delete_data_by_conditions(ckan_conditions)
         new_count = dbManager.count_data_by_conditions(ckan_conditions)
@@ -327,9 +420,12 @@ def main_options(options):
                         "title":get_title(json_data),
                         "notes":get_notes(json_data),
                         "field":get_field(json_data),
-                        "source":get_source_type_field(),
+                        "source":get_source_field(),
+                        "resource_type":get_resource_type_field(),
                         "insertion_date":get_insertion_date_field(),
-                        "created":get_created(json_data)
+                        "created":get_created(json_data),
+                        "audience":get_audience(json_data),
+                        "link":get_link(json_data)
                         })
                     if success:
                         numSuccess=numSuccess+1
