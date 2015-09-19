@@ -100,14 +100,25 @@ def get_json_from_material_name(material_name):
 
 def get_one_field_from_tm_data(data, field_name):
     """
-        Get one field value from the data of one training material.
+        Get one field value from the main data of one training material.
         * data {list} data of one training material.
         * field_name {string} name of the field to be obtained.
         * {string} Return the field value requested. None if there is any error.
     """
+    get_one_field_from_custom_tm_data(data, 'result', field_name)
+  
+
+def get_one_field_from_custom_tm_data(data, source_tag, field_name):
+    """
+        Get one field value from the data of one training material.
+        * data {list} data of one training material.
+        * field_name {string} name of the field to be obtained.
+        * source_tag {string} root tag from the field to be obtained.
+        * {string} Return the field value requested. None if there is any error.
+    """
     
     try:
-        return format(data['result'].get(field_name))
+        return format(data[source_tag].get(field_name))
     except Exception:
         logger.error ("Error getting "+field_name+" from training materials JSON")
         return None
@@ -135,16 +146,16 @@ def get_notes(data):
 
 def get_field(data):
     """
-        Get 'field' field from the data of one elixir registry entity.
-        * data {list} one record of Elixir registry data.
+        Get 'field' field from the data of one training material.
+        * data {list} data of one training material.
         * {string or list} Return 'field' value from the list. None if there is any error.
     """
     my_field = get_one_field_from_tm_data(data, 'tags')
-    #print(my_field)
+    return_value = []
     default_value = 'Bioinformatics'
     if my_field is not None:
         my_field_converted = eval(my_field)
-        return_value = []
+        
         for each_field in my_field_converted:
             try:
                 term = each_field.get('display_name')
@@ -199,6 +210,38 @@ def get_insertion_date_field():
     """
     return datetime.now()
 
+
+def get_audience(data):
+    """
+        Get 'audience' field from the data of one training material.
+        * data {list} data of one training material.
+        * {list} Return 'field' value from the list. None if there is any error.
+    """
+    resources = None
+    try:
+        result = data.get('result')
+        resources = result.get('resources')
+    except Exception as e:
+        logger.error("Error getting 'resources' from 'result' tag:")
+        logger.error(e)
+        
+    return_value = []
+    if resources is not None and len(resources)>0:
+        try:
+            resources_content = resources[0]
+            audience = resources_content.get('audience')
+            audience_terms = []
+            if audience is not None:
+                audience_terms = eval(audience)
+            for each_field in audience_terms:
+                return_value.append(each_field)
+        except Exception as e:
+            logger.error("Error getting audience field")
+            logger.error(e)    
+        return return_value
+    else:
+        return return_value
+    
 
 def get_created(data):
     """
@@ -357,7 +400,8 @@ def main_options(options):
                         "source":get_source_field(),
                         "resource_type":get_resource_type_field(),
                         "insertion_date":get_insertion_date_field(),
-                        "created":get_created(json_data)
+                        "created":get_created(json_data),
+                        "audience":get_audience(json_data)
                         })
                     if success:
                         numSuccess=numSuccess+1
