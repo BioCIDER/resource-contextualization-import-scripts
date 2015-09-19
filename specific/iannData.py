@@ -36,15 +36,15 @@ class IannDataLocking(object):
 """
 field_edam_relations = {
             'Bioinformatics'            :'Bioinformatics',
-            'Biostatistics'             :'Statistics',
-          #   'Biotherapeutics'           :'',  is not in the mapping list
+            'Biostatistics'             :'Statistics',  # add also biology
+          #   'Biotherapeutics'           :'',  to pathology and medicine also
             'Epigenomics'               :'Epigenomics',
             'Genomics'                  :'Genomics',
             'Immunology'                :'Immunology',
             'Medicine'                  :'Medicine',
             'Metabolomics'              :'Metabolomics',
             'Metagenomics'              :'Metagenomics',
-            'Pathology'                 :'Pathology',
+            'Pathology'                 :'Pathology',  
             'Pharmacology'              :'Pharmacology',
             'Physiology'                :'Physiology',
             'Proteomics'                :'Proteomics',
@@ -238,18 +238,34 @@ def get_field(data):
         return None
     
 
-def get_source_type_field():
+def get_resource_type_field():
     """
-        Get source type of any registry obtained with this script.
-        * {string} Return source type value.
+        Get resource type of any registry obtained with this script.
+        * {string} Return resource type value.
     """
-    return get_iann_source_type()
+    return get_iann_resource_type()
 
 
-def get_iann_source_type():
+def get_iann_resource_type():
     """
         Get specific data type of fields related with iAnn.
         * {string} Return data type of iAnn fields.
+    """
+    return 'Event'
+
+
+def get_source_field():
+    """
+        Get the source of any event obtained with this script.
+        * {string} Return source token.
+    """
+    return get_iann_source()
+
+
+def get_iann_source():
+    """
+      Get the specific source of fields related with iAnn.
+        * {string} Return a representative token of iann fields source.
     """
     return 'iann'
 
@@ -411,7 +427,7 @@ def main_options(options):
     dbManager = dbFactory.get_default_db_manager(ds_name)
     
     if (delete_all_old_data is not None and delete_all_old_data):
-        iann_conditions = [['EQ','source',get_source_type_field()]]
+        iann_conditions = [['EQ','source',get_source_field()]]
         previous_count = dbManager.count_data_by_conditions(iann_conditions)
         dbManager.delete_data_by_conditions(iann_conditions)
         new_count = dbManager.count_data_by_conditions(iann_conditions)
@@ -431,7 +447,8 @@ def main_options(options):
                     "field":get_field(result),
                     "provider":get_provider(result),
                     "link":get_link(result),
-                    "source":get_source_type_field(),
+                    "source":get_source_field(),
+                    "resource_type":get_resource_type_field(),
                     "insertion_date":get_insertion_date_field(),
                     "created":get_creation_date_field(result)                    
                     })
