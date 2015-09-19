@@ -35,21 +35,21 @@ class IannDataLocking(object):
     Dictionary with the relationships between special iAnn field terms and EDAM terms.
 """
 field_edam_relations = {
-            'Bioinformatics'            :'Bioinformatics',
-            'Biostatistics'             :'Statistics',  # add also biology
-          #   'Biotherapeutics'           :'',  to pathology and medicine also
-            'Epigenomics'               :'Epigenomics',
-            'Genomics'                  :'Genomics',
-            'Immunology'                :'Immunology',
-            'Medicine'                  :'Medicine',
-            'Metabolomics'              :'Metabolomics',
-            'Metagenomics'              :'Metagenomics',
-            'Pathology'                 :'Pathology',  
-            'Pharmacology'              :'Pharmacology',
-            'Physiology'                :'Physiology',
-            'Proteomics'                :'Proteomics',
-            'Systems Biology'           :'Systems biology',
-            'Transcriptomics'           :'Transcriptomics' 
+            'Bioinformatics'            :['Bioinformatics'],
+            'Biostatistics'             :['Statistics','Biology'],
+            'Biotherapeutics'           :['Pathology','Medicine'],
+            'Epigenomics'               :['Epigenomics'],
+            'Genomics'                  :['Genomics'],
+            'Immunology'                :['Immunology'],
+            'Medicine'                  :['Medicine'],
+            'Metabolomics'              :['Metabolomics'],
+            'Metagenomics'              :['Metagenomics'],
+            'Pathology'                 :['Pathology'],  
+            'Pharmacology'              :['Pharmacology'],
+            'Physiology'                :['Physiology'],
+            'Proteomics'                :['Proteomics'],
+            'Systems Biology'           :['Systems biology'],
+            'Transcriptomics'           :['Transcriptomics'] 
         }
 
 
@@ -205,35 +205,32 @@ def get_edam_field_value(original_value):
     """
         Converts one field to another within EDAM ontology.
         * original_value {string} original field value.
-        * {string} Return 'field' value adapted with EDAM ontology.
+        * {List} Return 'field' value adapted with EDAM ontology.
     """
     if original_value is not None:
         global field_edam_relations
-        edam_value = field_edam_relations.get(original_value,original_value)
-        return edam_value    
+        return field_edam_relations.get(original_value,[original_value])
     else:
-        return None
+        return []
     
     
 def get_field(data):
     """
         Get 'field' field from the data of one iAnn event. It can be adapted to EDAM vocabulary.
         * data {list} one event's iAnn data.
-        * {string or list} Return 'field' value from the list. None if there is any error.
+        * {List} Return 'field' value from the list. None if there is any error.
     """
-    
+    edam_values = []
     my_field = get_one_field_from_iann_data(data, 'field')
     if my_field is not None:
         clear_value = remove_unicode_chars(my_field)
         if isinstance(clear_value, basestring):
-            edam_value = get_edam_field_value(clear_value)
-            return edam_value
+            edam_values = get_edam_field_value(clear_value)
+            return edam_values
         else:
-            edam_value = []
             for each_value in clear_value: 
-                edam_value.append(get_edam_field_value(each_value))
-            return edam_value
-    
+                edam_values = edam_values + get_edam_field_value(each_value)
+            return edam_values
     else:
         return None
     
