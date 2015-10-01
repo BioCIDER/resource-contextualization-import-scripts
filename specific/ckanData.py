@@ -418,7 +418,7 @@ def main_options(options):
                 if registriesFromTime is None or isDataMoreRecentThan(json_data,registriesFromTime):
                     success = dbManager.insert_data({
                         "title":get_title(json_data),
-                        "notes":get_notes(json_data),
+                        "description":get_notes(json_data),
                         "field":get_field(json_data),
                         "source":get_source_field(),
                         "resource_type":get_resource_type_field(),
