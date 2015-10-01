@@ -305,7 +305,7 @@ def main_options(options):
         for record in records:           
             success = dbManager.insert_data({
                 "title":get_title(record),
-                "notes":get_description(record),
+                "description":get_description(record),
                 "link":get_link(record),
                 "field":get_field(record),
                 "source":get_source_field(),
