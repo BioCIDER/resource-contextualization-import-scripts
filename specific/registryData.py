@@ -25,13 +25,11 @@ resource_types_relations = {
             'Tool'                                  :['Tool'],
             'Workflow'                              :['Workflow'],    
             'Library'                               :['Tool'],
-            'Library'                               :['Tool'],
             'Database'                              :['Database'],
             'Suite'                                 :['Tool'],
             'Framework'                             :['Tool'],
             'Other'                                 :['Tool'],
-            'Widget'                                :['Widget'],
-            'Training Material'                     :['Training Material'] 
+            'Widget'                                :['Tool']
         }
 
 
