@@ -12,6 +12,29 @@ sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
 
 
+    
+"""
+    Dictionary with the relationships between input resource types and output resource types.
+"""
+resource_types_relations = {
+            'Tool (analysis)'                       :['Tool'],
+            'Tool (query and retrieval)'            :['Tool'],
+            'Tool (utility)'                        :['Tool'],
+            'Tool (deposition)'                     :['Tool'],
+            'Tool (visualiser)'                     :['Tool'],
+            'Tool'                                  :['Tool'],
+            'Workflow'                              :['Workflow'],    
+            'Library'                               :['Tool'],
+            'Library'                               :['Tool'],
+            'Database'                              :['Database'],
+            'Suite'                                 :['Tool'],
+            'Framework'                             :['Tool'],
+            'Other'                                 :['Tool'],
+            'Widget'                                :['Widget'],
+            'Training Material'                     :['Training Material'] 
+        }
+
+
 
 
 logger = None
@@ -58,8 +81,8 @@ def get_records():
         elixirData = requests.get('https://elixir-registry.cbs.dtu.dk/api/tool')
         records_list = json.loads(elixirData.text)
         return records_list
-    except RequestException as e:
-        logger.error ("RequestException asking for Elixir data")
+    except Exception as e:
+        logger.error ("Exception asking for Elixir data")
         logger.error (e)
         return None
 
@@ -133,6 +156,22 @@ def get_field(data):
         return return_value
     else:
         return None
+    
+    
+
+def get_resource_types_value(original_value):
+    """
+        Converts one original resource type to our own resource type names.
+        * original_value {string} original resource type value.
+        * {List} Return 'resource type' value adapted to our own necesities.
+    """
+    if original_value is not None:
+        global resource_types_relations
+        return resource_types_relations.get(original_value,['Tool'])
+    else:
+        return []
+    
+    
 
 
 def get_resource_type_field(data):
@@ -141,20 +180,21 @@ def get_resource_type_field(data):
         * data {list} one Elixir's record.
         * {string} Return resource type value.
     """
+    resource_types = []
     my_field = get_one_field_from_registry_data(data, 'resourceType')
     if my_field is not None:
         clear_value = remove_unicode_chars(my_field)
         if isinstance(clear_value, basestring):
-            return clear_value
+            resource_types = get_resource_types_value(clear_value)
+            return resource_types
         else:
-            return_value = []
             for each_value in clear_value: 
-                return_value.append(each_value)
-            return return_value
-    
+                resource_types = resource_types + get_resource_types_value(each_value)
+            return resource_types
     else:
         return None
-
+    
+    
 
 def get_source_field():
     """
