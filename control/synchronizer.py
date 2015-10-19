@@ -29,7 +29,8 @@ import iannData
 import registryData
 
 # Functions to be executed every hour for partial updatings
-UPDATING_1H_PROCESSES = [iannData.mainUpdating,ckanData.mainUpdating]
+#UPDATING_1H_PROCESSES = [iannData.mainUpdating,ckanData.mainUpdating]
+UPDATING_1H_PROCESSES = [iannData.mainUpdating]
 def getPastHour():
     return datetime.now()-timedelta(hours=1)
     
@@ -39,7 +40,8 @@ def getPastDay():  # For now this function is not being used because of the full
     return datetime.now()-timedelta(days=1)
 
 # Functions to be executed every week for full updatings
-FULL_UPDATING_1W_PROCESSES = [iannData.mainFullUpdating, ckanData.mainFullUpdating]
+FULL_UPDATING_1W_PROCESSES = [iannData.mainFullUpdating]
+#FULL_UPDATING_1W_PROCESSES = [iannData.mainFullUpdating, ckanData.mainFullUpdating]
 def getPastWeek(): # For now this function is not being used because of the full updating
     return datetime.now()-timedelta(days=7)
  
