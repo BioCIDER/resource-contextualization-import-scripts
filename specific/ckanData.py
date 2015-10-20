@@ -53,7 +53,9 @@ def get_materials_names():
         
     try:
         context = ssl._create_unverified_context()
-        tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
+        # TEMPORARY DOWN tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
+        tessResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_list', context=context)
+
         tessData = tessResponse.read()
         # Direct call gaves some problems related with SSL handshake.
         # tessData = requests.get('https://tess.elixir-uk.org/api/3/action/package_list')
@@ -80,7 +82,9 @@ def get_json_from_material_name(material_name):
     
     try:
         context = ssl._create_unverified_context()
-        materialResponse = urllib2.urlopen('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name, context=context)
+        # materialResponse = urllib2.urlopen('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name, context=context)
+        materialResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_show?id=' + material_name, context=context)
+        
         results = materialResponse.read()
         # results = requests.get('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name)
         try:           
@@ -262,7 +266,7 @@ def get_link(data):
         Get 'url' field from the data of one training material.
         * data {list} data of one training material.
         * {datetime} Return 'url' value from the list. None if there is any error.
-    """    
+    """
     return get_one_field_from_tm_data(data, 'url')
 
 
@@ -431,13 +435,71 @@ def main_options(options):
                         numSuccess=numSuccess+1
                         
         logger.info ('Inserted '+str(numSuccess)+' new registries')   
-                    
-    logger.info('<< Finished ckanData importing process.')   
+     
+    
+    if updateRegistries:
+        postProcessing(options)
+        
+    logger.info('<< Finished ckanData importing process.')
+    
+    
+    
+
+def postProcessing(options):
+    """
+        Executes some curating operations over imported data
+    """
+    
+    init_logger()
+    
+    logger.info('> Executing ckan postprocessing... ')
+    ds_name = None
+    if ('ds_name' in options.keys()):
+        ds_name = options['ds_name']
+    dbFactory = DBFactory()
+    dbManager = dbFactory.get_default_db_manager(ds_name)
+    
+    # We want to change all courses from mygoblet.org tagged as Training Materials
+    ckan_conditions = [
+        ['AND',[
+                ['EQ','link','http://www.mygoblet.org//training-portal/courses/*'],
+                ['EQ','resource_type',["Training Material"]]
+               ]
+        ]
+    ]
+    
+    previous_count = dbManager.count_data_by_conditions(ckan_conditions)
+    #print (previous_count)
+    results = dbManager.get_data_by_conditions(ckan_conditions)
+    # delete all of them , and then we insert them again modified. We will have to implement update operation in AbstractManager
+    dbManager.delete_data_by_conditions(ckan_conditions)
+    new_count = dbManager.count_data_by_conditions(ckan_conditions)
+    #print (new_count)
+    numSuccess = 0
+    for result in results:
+        #print (result)    
+        success = dbManager.insert_data({
+            "title":result.get("title"),
+            "description":result.get("description"),
+            "field":result.get("field"),
+            "source":result.get("source"),
+            "resource_type":["Event"],  # Now they are Events, not Training Materials!
+            "insertion_date":result.get("insertion_date"),
+            "created":result.get("created"),
+            "audience":result.get("audience"),
+            "link":result.get("link")
+            })
+        if success:
+            numSuccess=numSuccess+1
+    #print (numSuccess)
+    logger.info('Changed '+str(numSuccess)+' mygoblet.org records tagged as Training Materials to Events')
+    logger.info('< Finished ckan postprocessing')
 
 
 if __name__ == "__main__":
     # main_options({"ds_name":'test_core'})
     mainFullUpdating()
+    
     #now = datetime.now()
     #oneweekbefore = now-(timedelta(days=100))
     #mainUpdating(oneweekbefore)
