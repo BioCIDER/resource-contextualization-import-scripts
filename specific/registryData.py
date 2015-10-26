@@ -23,7 +23,7 @@ resource_types_relations = {
             'Tool (deposition)'                     :['Tool'],
             'Tool (visualiser)'                     :['Tool'],
             'Tool'                                  :['Tool'],
-            'Workflow'                              :['Workflow'],    
+            'Workflow'                              :['Tool'],    
             'Library'                               :['Tool'],
             'Database'                              :['Database'],
             'Suite'                                 :['Tool'],
