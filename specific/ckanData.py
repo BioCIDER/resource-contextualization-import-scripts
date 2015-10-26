@@ -8,6 +8,8 @@ from logging.handlers import TimedRotatingFileHandler
 import ssl
 import urllib2
 
+import ConfigParser
+
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
@@ -400,9 +402,23 @@ def main_options(options):
     if updateRegistries:   
         materials_names = get_materials_names()
     
+    
+    user = None
+    passw = None
+    try:
+        config = ConfigParser.RawConfigParser()
+        config.read('ConfigFile.properties')
+        usertemp = config.get('AuthenticationSection', 'database.user');
+        passwtemp = config.get('AuthenticationSection', 'database.password');
+        user = usertemp
+        passw = passwtemp
+    except Exception as e:
+        logger.info ("Not user info found, using anonymous user... ")
+        logger.info (e)
+            
     dbFactory = DBFactory()
-    # print (dbFactory)
-    dbManager = dbFactory.get_default_db_manager(ds_name)
+    dbManager = dbFactory.get_default_db_manager_with_username(ds_name,user,passw)
+    
     # print (dbManager)
     if (delete_all_old_data is not None and delete_all_old_data):
         ckan_conditions = [['EQ','source',get_source_field()]]
@@ -456,8 +472,23 @@ def postProcessing(options):
     ds_name = None
     if ('ds_name' in options.keys()):
         ds_name = options['ds_name']
+        
+    
+    user = None
+    passw = None
+    try:
+        config = ConfigParser.RawConfigParser()
+        config.read('ConfigFile.properties')
+        usertemp = config.get('AuthenticationSection', 'database.user');
+        passwtemp = config.get('AuthenticationSection', 'database.password');
+        user = usertemp
+        passw = passwtemp
+    except Exception as e:
+        logger.info ("Not user info found, using anonymous user... ")
+        logger.info (e)
+            
     dbFactory = DBFactory()
-    dbManager = dbFactory.get_default_db_manager(ds_name)
+    dbManager = dbFactory.get_default_db_manager_with_username(ds_name,user,passw)
     
     # We want to change all courses from mygoblet.org tagged as Training Materials
     ckan_conditions = [

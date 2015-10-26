@@ -7,6 +7,7 @@ import threading
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+import ConfigParser
 
 # Importing db manager
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
@@ -420,8 +421,21 @@ def main_options(options):
         iann_data = get_iann_data(registriesFromTime)
     
     
-    dbFactory = DBFactory()       
-    dbManager = dbFactory.get_default_db_manager(ds_name)
+    user = None
+    passw = None
+    try:
+        config = ConfigParser.RawConfigParser()
+        config.read('ConfigFile.properties')
+        usertemp = config.get('AuthenticationSection', 'database.user');
+        passwtemp = config.get('AuthenticationSection', 'database.password');
+        user = usertemp
+        passw = passwtemp
+    except Exception as e:
+        logger.info ("Not user info found, using anonymous user... ")
+        logger.info (e)
+        
+    dbFactory = DBFactory()
+    dbManager = dbFactory.get_default_db_manager_with_username(ds_name,user,passw)
     
     if (delete_all_old_data is not None and delete_all_old_data):
         iann_conditions = [['EQ','source',get_source_field()]]
