@@ -448,23 +448,26 @@ def main_options(options):
     if iann_data is not None:    
         numSuccess = 0
         for result in iann_data:
-            if (result is not None):
-                success = dbManager.insert_data({
-                    "title":get_title(result),
-                    "start":get_start(result),
-                    "end":get_end(result),
-                    "city":get_city(result),
-                    "country":get_country(result),
-                    "field":get_field(result),
-                    "provider":get_provider(result),
-                    "link":get_link(result),
-                    "source":get_source_field(),
-                    "resource_type":get_resource_type_field(),
-                    "insertion_date":get_insertion_date_field(),
-                    "created":get_creation_date_field(result)                    
-                    })
-                if success:
-                    numSuccess=numSuccess+1
+            if (result is not None):        
+                exists = util.existURL(get_link(record))
+                # logger.info ('Exists? '+get_link(record)+' :'+str(exists))   
+                if (exists):
+                        success = dbManager.insert_data({
+                            "title":get_title(result),
+                            "start":get_start(result),
+                            "end":get_end(result),
+                            "city":get_city(result),
+                            "country":get_country(result),
+                            "field":get_field(result),
+                            "provider":get_provider(result),
+                            "link":get_link(result),
+                            "source":get_source_field(),
+                            "resource_type":get_resource_type_field(),
+                            "insertion_date":get_insertion_date_field(),
+                            "created":get_creation_date_field(result)                    
+                            })
+                        if success:
+                            numSuccess=numSuccess+1
         
         logger.info ('Inserted '+str(numSuccess)+' new registries')   
               
