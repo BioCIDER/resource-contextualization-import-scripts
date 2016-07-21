@@ -508,20 +508,23 @@ def postProcessing(options):
     #print (new_count)
     numSuccess = 0
     for result in results:
-        #print (result)    
-        success = dbManager.insert_data({
-            "title":result.get("title"),
-            "description":result.get("description"),
-            "field":result.get("field"),
-            "source":result.get("source"),
-            "resource_type":["Event"],  # Now they are Events, not Training Materials!
-            "insertion_date":result.get("insertion_date"),
-            "created":result.get("created"),
-            "audience":result.get("audience"),
-            "link":result.get("link")
-            })
-        if success:
-            numSuccess=numSuccess+1
+        #print (result)
+        exists = util.existURL(result.get("link"))
+        # logger.info ('Exists? '+get_link(record)+' :'+str(exists))   
+        if (exists):
+            success = dbManager.insert_data({
+                "title":result.get("title"),
+                "description":result.get("description"),
+                "field":result.get("field"),
+                "source":result.get("source"),
+                "resource_type":["Event"],  # Now they are Events, not Training Materials!
+                "insertion_date":result.get("insertion_date"),
+                "created":result.get("created"),
+                "audience":result.get("audience"),
+                "link":result.get("link")
+                })
+            if success:
+                numSuccess=numSuccess+1
     #print (numSuccess)
     logger.info('Changed '+str(numSuccess)+' mygoblet.org records tagged as Training Materials to Events')
     logger.info('< Finished ckan postprocessing')

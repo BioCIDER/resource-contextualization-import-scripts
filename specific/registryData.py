@@ -13,6 +13,9 @@ import ConfigParser
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
 
+# Importing utils
+sys.path.insert(0, '../util')
+import util
 
     
 """
@@ -78,7 +81,7 @@ def get_records():
     """
        
     try:
-        elixirData = requests.get('https://elixir-registry.cbs.dtu.dk/api/tool')
+        elixirData = requests.get('https://bio.tools/api/tool')
         records_list = json.loads(elixirData.text)
         return records_list
     except Exception as e:
@@ -355,18 +358,21 @@ def main_options(options):
     if records is not None:
         
         numSuccess = 0
-        for record in records:           
-            success = dbManager.insert_data({
-                "title":get_title(record),
-                "description":get_description(record),
-                "link":get_link(record),
-                "field":get_field(record),
-                "source":get_source_field(),
-                "resource_type":get_resource_type_field(record),
-                "insertion_date":get_insertion_date_field()
-            })
-            if success:
-                numSuccess=numSuccess+1
+        for record in records:
+            exists = util.existURL(get_link(record))
+            # logger.info ('Exists? '+get_link(record)+' :'+str(exists))   
+            if (exists):
+                        success = dbManager.insert_data({
+                            "title":get_title(record),
+                            "description":get_description(record),
+                            "link":get_link(record),
+                            "field":get_field(record),
+                            "source":get_source_field(),
+                            "resource_type":get_resource_type_field(record),
+                            "insertion_date":get_insertion_date_field()
+                        })
+                        if success:
+                            numSuccess=numSuccess+1
                 
         logger.info ('Inserted '+str(numSuccess)+' new registries')   
    
