@@ -13,7 +13,9 @@ import ConfigParser
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
 
-
+# Importing utils
+sys.path.insert(0, '../util')
+import util
 
 
 '''
