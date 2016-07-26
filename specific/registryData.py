@@ -359,9 +359,9 @@ def main_options(options):
         
         numSuccess = 0
         for record in records:
-            exists = util.existURL(get_link(record))
+            # exists = util.existURL(get_link(record))
             # logger.info ('Exists? '+get_link(record)+' :'+str(exists))   
-            if (exists):
+            # if (exists):
                         success = dbManager.insert_data({
                             "title":get_title(record),
                             "description":get_description(record),

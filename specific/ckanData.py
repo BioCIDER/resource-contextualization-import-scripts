@@ -14,7 +14,9 @@ import ConfigParser
 sys.path.insert(0, '../../resource-contextualization-import-db/abstraction')
 from DB_Factory import DBFactory
 
-
+# Importing utils
+sys.path.insert(0, '../util')
+import util
 
 
 
@@ -54,9 +56,8 @@ def get_materials_names():
     """
         
     try:
-        context = ssl._create_unverified_context()
         # TEMPORARY DOWN tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
-        tessResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_list', context=context)
+        tessResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_list')
 
         tessData = tessResponse.read()
         # Direct call gaves some problems related with SSL handshake.
@@ -83,9 +84,8 @@ def get_json_from_material_name(material_name):
     """
     
     try:
-        context = ssl._create_unverified_context()
         # materialResponse = urllib2.urlopen('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name, context=context)
-        materialResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_show?id=' + material_name, context=context)
+        materialResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_show?id=' + material_name)
         
         results = materialResponse.read()
         # results = requests.get('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name)

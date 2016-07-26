@@ -1,4 +1,4 @@
-import daemon
+import daemon   # Install via pip2 install python-daemon, not pip2 install daemon !
 import time
 import synchronizer
 import os, sys
