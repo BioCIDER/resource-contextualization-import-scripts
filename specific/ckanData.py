@@ -50,14 +50,14 @@ def init_logger():
 def get_materials_names():
         
     """
-        Get all training material names from "tess.elixir-uk.org"
+        Get all training material names from "tess.elixir-europe.org"
         * {list} training material names:          
             None if there is any error.
     """
         
     try:
         # TEMPORARY DOWN tessResponse = urllib2.urlopen('https://tess.elixir-uk.org/api/3/action/package_list', context=context)
-        tessResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_list')
+        tessResponse = urllib2.urlopen('http://tess.elixir-europe.org/api/3/action/package_list')
 
         tessData = tessResponse.read()
         # Direct call gaves some problems related with SSL handshake.
@@ -73,7 +73,7 @@ def get_materials_names():
  
 def get_json_from_material_name(material_name):
     """
-        Makes a Request to the CKAN Server from "tess.elixir-uk.org" to obtain data of one training material.
+        Makes a Request to the CKAN Server from "tess.elixir-europe.org" to obtain data of one training material.
         * naterial_name {string} name of the field to be obtained.
         * {list} training material data. In this script we will need:
             variables {string}:
@@ -84,11 +84,11 @@ def get_json_from_material_name(material_name):
     """
     
     try:
-        # materialResponse = urllib2.urlopen('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name, context=context)
-        materialResponse = urllib2.urlopen('http://tess-elixir.csc.fi/api/3/action/package_show?id=' + material_name)
+        # materialResponse = urllib2.urlopen('http://tess.elixir-europe.org/api/3/action/package_show?id=' + material_name, context=context)
+        materialResponse = urllib2.urlopen('http://tess.elixir-europe.org/api/3/action/package_show?id=' + material_name)
         
         results = materialResponse.read()
-        # results = requests.get('http://tess.elixir-uk.org/api/3/action/package_show?id=' + material_name)
+        # results = requests.get('http://tess.elixir-europe.org/api/3/action/package_show?id=' + material_name)
         try:           
             json_data = json.loads(results)
             return json_data
